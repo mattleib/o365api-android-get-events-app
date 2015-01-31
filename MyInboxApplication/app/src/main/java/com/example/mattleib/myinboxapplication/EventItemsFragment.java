@@ -19,7 +19,7 @@ public class EventItemsFragment extends Fragment {
 
     public interface EventRefresh{
         // Interface method you will call from this fragment
-        public void refreshEvents();
+        public void onRefreshEvents();
     }// end interface
 
     // Instantiate the new Interface Callback
@@ -28,13 +28,9 @@ public class EventItemsFragment extends Fragment {
     @Override
     public void onAttach(Activity activity){
         super.onAttach(activity);
-
         try {
             // Attaches the Interface to the Activity
-            // must add "implements ShareDeletedItem" in your
-            // Activity or this Exception is thrown
             mCallback = (EventRefresh) activity;
-
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -57,7 +53,7 @@ public class EventItemsFragment extends Fragment {
                 ( new Handler()).postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        mCallback.refreshEvents();
+                        mCallback.onRefreshEvents();
                         swipeView.setRefreshing(false);
                     }
                 }, 3000);

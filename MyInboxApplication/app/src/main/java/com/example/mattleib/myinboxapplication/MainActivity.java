@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity implements com.example.mattleib.myinboxapplication.EventItemsFragment.EventRefresh {
+public class MainActivity extends ActionBarActivity implements com.example.mattleib.myinboxapplication.EventItemsFragment.EventRefresh,SharedPreferences.OnSharedPreferenceChangeListener {
 
     /**
      * Name of the Module for Error display's etc.
@@ -58,6 +58,12 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        /**
+         * Read default preferences. Initialize with defaults.
+         */
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         if (savedInstanceState == null) {
 
@@ -153,14 +159,10 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-
             /**
              * Start preferences
              */
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-            Intent intentSetPref = new Intent(getApplicationContext(), SettingsActivity.class);
             startActivity(new Intent(this, SettingsActivity.class));
-
             return true;
         }
 
@@ -168,9 +170,18 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
     }
 
     /**
-     * The interface for fragment to notify to refresh events
+     * The interface that listens to Preference changes
      */
-    public void refreshEvents()
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals("PREF_CALENDAR_SPAN")) {
+            getAllEvents();
+        }
+    }
+
+    /**
+     * The interface for fragment to notify to Refresh events
+     */
+    public void onRefreshEvents()
     {
         getAllEvents();
     }
@@ -192,7 +203,18 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
 
         lView.setAdapter(mEventsAdapter);
 
+        /**
+         * Get the preference
+         */
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String eventSpan = sharedPreferences.getString("PREF_CALENDAR_SPAN", "day");
         String eventsQuery = Helpers.GetEventsQueryString(DataTypes.EventTimeSpan.Day);
+        if(eventSpan.equals("week")) { /// week
+            eventsQuery = Helpers.GetEventsQueryString(DataTypes.EventTimeSpan.Week);
+        } else if (eventSpan.equals("month")) { /// month
+            eventsQuery = Helpers.GetEventsQueryString(DataTypes.EventTimeSpan.Month);
+        }
+
         /**
          * Exec async load task
          */

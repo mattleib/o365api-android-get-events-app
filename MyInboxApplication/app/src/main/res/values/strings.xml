@@ -7,4 +7,11 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_settings">SettingsActivity</string>
 
+    <string name="preference_ppe_title">Run application in PPE mode</string>
+    <string name="preference_ppe_summary">Use the Pre-production environment. This is for testing only.</string>
+    <string name="preference_ppe_default">false</string>
+    <string name="preference_eventspan_title">Events timespan</string>
+    <string name="preference_eventspan_summmary">Select the time interval to retrieve events.</string>
+    <string name="preference_eventspan_default">day</string>
+
 </resources>

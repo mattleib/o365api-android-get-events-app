@@ -77,7 +77,8 @@ public class Helpers {
         //"Start": "2015-01-23T20:00:00Z",
         //"End": "2015-01-23T21:00:00Z",
         // Get the local time
-        Time now = new Time(Time.getCurrentTimezone()); // returns time in current TimeZone
+        //Time now = new Time(Time.getCurrentTimezone()); // returns time in current TimeZone
+        Time now = new Time("UTC"); // returns time in UTC
         now.setToNow();
 
         String startDate = now.format("%Y-%m-%d");

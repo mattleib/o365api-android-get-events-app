@@ -17,5 +17,10 @@ public class Constants {
     public static String O365_UserHint = "garthf@oauthplay.onmicrosoft.com";
 
     public static String O365_EventsQueryTemplate = "https://outlook.office365.com/api/v1.0/me/calendarview?startdatetime=%sT%sZ&enddatetime=%sT%sZ&$top=50&$orderby=Start";
+
+    public static class PreferenceKeys {
+        public static String CalendarTimeSpan = "PREF_CALENDAR_SPAN";
+        public static String UsePPE = "PREF_USEPPE";
+    }
 }
 
