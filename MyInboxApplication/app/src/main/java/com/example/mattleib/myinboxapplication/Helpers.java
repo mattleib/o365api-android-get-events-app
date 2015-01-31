@@ -73,13 +73,7 @@ public class Helpers {
         return dt;
     }
 
-    public enum EventTimeSpan {
-        Day,
-        Week,
-        Month
-    }
-
-    public static String GetEventsQueryString(EventTimeSpan eventTimeSpan) {
+    public static String GetEventsQueryString(DataTypes.EventTimeSpan eventTimeSpan) {
         //"Start": "2015-01-23T20:00:00Z",
         //"End": "2015-01-23T21:00:00Z",
         // Get the local time
@@ -92,9 +86,9 @@ public class Helpers {
 
         Calendar cal = new GregorianCalendar();
         cal.set(now.year, now.month, now.monthDay);
-        if (eventTimeSpan == EventTimeSpan.Day) {
+        if (eventTimeSpan == DataTypes.EventTimeSpan.Day) {
             cal.add(Calendar.DAY_OF_MONTH, 0);
-        } else if (eventTimeSpan == EventTimeSpan.Week) {
+        } else if (eventTimeSpan == DataTypes.EventTimeSpan.Week) {
             cal.add(Calendar.DAY_OF_MONTH, 6);
         } else {
             cal.add(Calendar.MONTH, 1);

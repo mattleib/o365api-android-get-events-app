@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="MyYellow">#FFBB33</color>
+    <color name="MyBlue">#0099CC</color>
+    <color name="MyPurple">#9933CC</color>
+    <color name="MyGreen">#669900</color>
+    <color name="MyOrange">#FF8800</color>
+    <color name="MyRed">#FF4444</color>
+    <color name="MyWhite">#FFFFFF</color>
+    <color name="MyBlack">#000000</color>
+    <color name="MyGrey">#A1A1A1</color>
+
+    <color name="Event_Canceled">#A1A1A1</color>
+    <color name="Event_Normal">#FFBB33</color>
+    <color name="Event_AllDay">#FF4444</color>
+    <color name="Event_OnMyOwn">#669900</color>
+    <color name="Event_Separator">#9933CC</color>
+
+</resources>

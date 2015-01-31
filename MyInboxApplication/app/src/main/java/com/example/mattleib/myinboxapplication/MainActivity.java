@@ -1,10 +1,13 @@
 package com.example.mattleib.myinboxapplication;
 
 import android.app.ProgressDialog;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -150,6 +153,14 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+
+            /**
+             * Start preferences
+             */
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+            Intent intentSetPref = new Intent(getApplicationContext(), SettingsActivity.class);
+            startActivity(new Intent(this, SettingsActivity.class));
+
             return true;
         }
 
@@ -181,7 +192,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
 
         lView.setAdapter(mEventsAdapter);
 
-        String eventsQuery = Helpers.GetEventsQueryString(Helpers.EventTimeSpan.Day);
+        String eventsQuery = Helpers.GetEventsQueryString(DataTypes.EventTimeSpan.Day);
         /**
          * Exec async load task
          */
@@ -235,7 +246,17 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 v = inflater.inflate(R.layout.eventitem_row_layout, null);
             }
 
+            v.setBackgroundColor(getResources().getColor(R.color.Event_Normal));
+
             EventItem e = itemList.get(position);
+
+            TextView text4 = (TextView) v.findViewById(R.id.organizer);
+            if(e.getOrganizer() == null) {
+                text4.setVisibility(View.GONE);
+                v.setBackgroundColor(getResources().getColor(R.color.Event_OnMyOwn));
+            } else {
+                text4.setText("Organizer: " + e.getOrganizer().getEmailAddress().getName());
+            }
 
             String eventDay = Helpers.ConvertUtcDateToLocalDay(e.getStart());
             TextView separator = (TextView) v.findViewById(R.id.date_separator);
@@ -256,6 +277,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             TextView text2 = (TextView) v.findViewById(R.id.end);
             if(e.IsAllDay) {
                 text2.setText("(All Day Event)");
+                v.setBackgroundColor(getResources().getColor(R.color.Event_AllDay));
             } else {
                 localTime = Helpers.ConvertUtcDateToLocalTime(e.getEnd());
                 text2.setText("("+localTime+")");
@@ -268,11 +290,8 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 text3.setText("Location: " + e.getLocation().getDisplayName());
             }
 
-            TextView text4 = (TextView) v.findViewById(R.id.organizer);
-            if(e.getOrganizer() == null) {
-                text4.setVisibility(View.GONE);
-            } else {
-                text4.setText("Organizer: " + e.getOrganizer().getEmailAddress().getName());
+            if(e.getIsCancelled()) {
+                v.setBackgroundColor(getResources().getColor(R.color.Event_Canceled));
             }
 
             return v;

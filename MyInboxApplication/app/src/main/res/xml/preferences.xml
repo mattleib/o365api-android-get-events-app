@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="PreferenceCategory CheckBoxPreference">
+        <CheckBoxPreference
+            android:key="PREF_USEPPE"
+            android:title="Run application in PPE mode."
+            android:summary="Use the Pre-production environment [SDF] for testing."
+            android:defaultValue="false"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="PreferenceCategory ListPreference">
+        <ListPreference
+            android:key="PREF_CALENDAR_SPAN"
+            android:title="Events timespan."
+            android:summary="Select the time interval to retrieve events."
+            android:entries="@array/event_span_entries"
+            android:entryValues="@array/event_span_values"
+            android:defaultValue="1" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

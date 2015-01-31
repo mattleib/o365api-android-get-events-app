@@ -10,9 +10,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textSize="16dp"
-        android:textStyle="bold"
-        style="?android:listSeparatorTextViewStyle"
+        style="@style/ItemSeparator"
         />
 
     <TextView
@@ -22,6 +20,7 @@
         android:layout_weight="1"
         android:textSize="14dp"
         android:textStyle="bold"
+        style="@style/ListItem"
         />
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -34,7 +33,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="10dp"
-            android:textStyle="italic"/>
+            android:textStyle="italic"
+            style="@style/ListItem"
+            />
 
         <TextView
             android:id="@+id/end"
@@ -42,7 +43,8 @@
             android:layout_height="wrap_content"
             android:textSize="10dp"
             android:paddingLeft="5dip"
-            android:textStyle="italic"/>
+            android:textStyle="italic"
+            style="@style/ListItem"/>
 
     </LinearLayout>
 
@@ -50,12 +52,16 @@
         android:id="@+id/location"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="10dp" />
+        android:textSize="10dp"
+        style="@style/ListItem"
+        />
 
     <TextView
         android:id="@+id/organizer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="10dp" />
+        android:textSize="10dp"
+        style="@style/ListItem"
+        />
 
 </LinearLayout>
