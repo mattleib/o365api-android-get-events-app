@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="event_span_entries">
-        <item>One day</item>
-        <item>One week</item>
-        <item>One month</item>
+        <item>Today</item>
+        <item>Next 7 days</item>
+        <item>Next 30 days</item>
     </string-array>
     <string-array name="event_span_values">
         <item>day</item>

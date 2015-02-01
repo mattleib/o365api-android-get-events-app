@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,10 +20,14 @@ public class SettingsFragment extends PreferenceFragment
     public interface EventTimespanChanged{
         public void onNewTimeSpan(String timeSpan);
         public void onEnvironmentChanged(Boolean usePPE);
+        public void onColorChanged(Boolean useCool);
     }// end interface
 
     // Instantiate the Interface Callback
     private EventTimespanChanged mCallback = null;
+
+    // Text for eventSpan summary
+    private String mEventsSpanSummary = "";
 
     @Override
     public void onAttach(Activity activity){
@@ -41,15 +47,39 @@ public class SettingsFragment extends PreferenceFragment
         super.onCreate(savedInstanceState);
 
         addPreferencesFromResource(R.xml.preferences);
+
+        // adjust preference summary to current selected value
+        Preference preference = findPreference(Constants.PreferenceKeys.CalendarTimeSpan);
+        mEventsSpanSummary = preference.getSummary().toString();
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+        String eventSpan = sharedPreferences.getString("PREF_CALENDAR_SPAN", "week");
+        adjustEventSpanSummary(eventSpan);
+    }
+
+    private void adjustEventSpanSummary(String eventSpan)
+    {
+        Preference preference = findPreference(Constants.PreferenceKeys.CalendarTimeSpan);
+        if(eventSpan.equals("day")) { /// day
+            preference.setSummary(mEventsSpanSummary + " today.");
+        } else if (eventSpan.equals("week")) { /// week
+            preference.setSummary(mEventsSpanSummary + " next seven days.");
+        } else { // month
+            preference.setSummary(mEventsSpanSummary + " next 30 days.");
+        }
     }
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.equals(Constants.PreferenceKeys.CalendarTimeSpan)) {
             String newValue = sharedPreferences.getString(key, "");
+            adjustEventSpanSummary(newValue);
             mCallback.onNewTimeSpan(newValue);
         } else if (key.equals(Constants.PreferenceKeys.UsePPE)) {
             Boolean newValue = sharedPreferences.getBoolean(key, false);
             mCallback.onEnvironmentChanged(newValue);
+        } else if (key.equals(Constants.PreferenceKeys.UseCoolColors)) {
+            Boolean newValue = sharedPreferences.getBoolean(key, false);
+            mCallback.onColorChanged(newValue);
         }
     }
 

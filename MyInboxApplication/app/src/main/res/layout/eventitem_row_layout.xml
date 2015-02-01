@@ -2,57 +2,30 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    >
-
-    <TextView
-        android:id="@+id/date_separator"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        style="@style/ItemSeparator"
-        />
+    android:layout_height="wrap_content" >
 
     <TextView
         android:id="@+id/subject"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:textSize="14dp"
         android:textStyle="bold"
         style="@style/ListItem"
         />
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:orientation="horizontal"
+    <TextView
+        android:id="@+id/startend"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <TextView
-            android:id="@+id/start"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="10dp"
-            android:textStyle="italic"
-            style="@style/ListItem"
-            />
-
-        <TextView
-            android:id="@+id/end"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="10dp"
-            android:paddingLeft="5dip"
-            android:textStyle="italic"
-            style="@style/ListItem"/>
-
-    </LinearLayout>
+        android:layout_height="wrap_content"
+        android:textSize="12dp"
+        style="@style/ListItem"
+        />
 
     <TextView
         android:id="@+id/location"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="10dp"
+        android:textSize="12dp"
         style="@style/ListItem"
         />
 
@@ -60,8 +33,8 @@
         android:id="@+id/organizer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="10dp"
+        android:textSize="12dp"
         style="@style/ListItem"
-        />
+       />
 
 </LinearLayout>

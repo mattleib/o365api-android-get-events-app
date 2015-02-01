@@ -24,11 +24,14 @@ public class SettingsActivity extends Activity
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String eventSpan = sharedPreferences.getString(Constants.PreferenceKeys.CalendarTimeSpan, "day");
         Boolean usePPE = sharedPreferences.getBoolean(Constants.PreferenceKeys.UsePPE, false);
+        Boolean useCoolColors = sharedPreferences.getBoolean(Constants.PreferenceKeys.UseCoolColors, false);
 
         mPreferenceSettings = new PreferenceSettings(
                 new PreferenceSetting(eventSpan, eventSpan),
-                new PreferenceSetting(usePPE.toString(), usePPE.toString())
+                new PreferenceSetting(usePPE.toString(), usePPE.toString()),
+                new PreferenceSetting(useCoolColors.toString(), useCoolColors.toString())
         );
+        setIntent();
     }
 
     /**
@@ -51,6 +54,11 @@ public class SettingsActivity extends Activity
 
     public void onEnvironmentChanged(Boolean usePPE) {
         mPreferenceSettings.getUsePPE().setNewValue(usePPE.toString());
+        setIntent();
+    }
+
+    public void onColorChanged(Boolean useCool) {
+        mPreferenceSettings.getUseCoolColor().setNewValue(useCool.toString());
         setIntent();
     }
 }

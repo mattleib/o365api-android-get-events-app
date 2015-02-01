@@ -10,4 +10,10 @@ public class DataTypes {
         Week,
         Month
     }
+
+    public enum ItemType {
+        event,
+        section,
+        empty
+    }
 }

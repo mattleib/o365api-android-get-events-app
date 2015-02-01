@@ -9,7 +9,11 @@ import java.util.Date;
 /**
  * Created by mattleib on 1/26/2015.
  */
-public class EventItem implements Serializable {
+public class EventItem implements Serializable, Item {
+
+    public DataTypes.ItemType isItemType() {
+        return DataTypes.ItemType.event;
+    }
 
     protected String Subject;
     protected String BodyPreview;

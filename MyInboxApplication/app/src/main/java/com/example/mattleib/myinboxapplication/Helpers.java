@@ -38,42 +38,7 @@ public class Helpers {
         }
     }
 
-    public static String ConvertUtcDateToLocalDay(String utcDateRFC3339)
-    {
-        //RFC339
-        //"Start": "2015-01-23T20:00:00Z",
-        //"End": "2015-01-23T21:00:00Z",
-        Time now = new Time();
-        now.parse3339(utcDateRFC3339);
-
-        int utcOffset = TimeZone.getDefault().getOffset(now.toMillis(false));
-
-        now.set(now.toMillis(false) + utcOffset);
-
-        String dt = now.format("%d/%m/%Y");
-
-        return dt;
-    }
-
-    public static String ConvertUtcDateToLocalTime(String utcDateRFC3339)
-    {
-        //RFC339
-        //"Start": "2015-01-23T20:00:00Z",
-        //"End": "2015-01-23T21:00:00Z",
-        Time now = new Time();
-        now.parse3339(utcDateRFC3339);
-
-        //int utcOffset = TimeZone.getDefault().getRawOffset();
-        int utcOffset = TimeZone.getDefault().getOffset(now.toMillis(false));
-
-        now.set(now.toMillis(false) + utcOffset);
-
-        String dt = now.format("%d/%m/%Y %H:%M:%S");
-
-        return dt;
-    }
-
-    public static String GetEventsQueryString(DataTypes.EventTimeSpan eventTimeSpan) {
+    public static String GetEventsQueryString(String queryTemplate, DataTypes.EventTimeSpan eventTimeSpan) {
         //"Start": "2015-01-23T20:00:00Z",
         //"End": "2015-01-23T21:00:00Z",
         // Get the local time
@@ -99,7 +64,7 @@ public class Helpers {
         sdf.setCalendar(cal);
         String endDate = sdf.format(cal.getTime());
 
-        String s = String.format(Constants.O365_EventsQueryTemplate, startDate, startTime, endDate, endTime);
+        String s = String.format(queryTemplate, startDate, startTime, endDate, endTime);
 
         return s;
     }

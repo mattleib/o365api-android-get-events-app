@@ -11,10 +11,18 @@
     <color name="MyBlack">#000000</color>
     <color name="MyGrey">#A1A1A1</color>
 
-    <color name="Event_Canceled">#A1A1A1</color>
-    <color name="Event_Normal">#FFBB33</color>
-    <color name="Event_AllDay">#FF4444</color>
-    <color name="Event_OnMyOwn">#669900</color>
-    <color name="Event_Separator">#9933CC</color>
+    <color name="Event_Canceled_Cool">#ffbbbbbb</color>
+    <color name="Event_Normal_AM_Cool">#899dc2ff</color>
+    <color name="Event_Normal_PM_Cool">#dc9dc2ff</color>
+    <color name="Event_AllDay_Cool">#8f88b094</color>
+    <color name="Event_OnMyOwn_Cool">#d0bdafc5</color>
+    <color name="Event_Separator_Cool">#ff425980</color>
+
+    <color name="Event_Canceled_Warm">#ffb6b7bb</color>
+    <color name="Event_Normal_AM_Warm">#61ffdc0a</color>
+    <color name="Event_Normal_PM_Warm">#a5ffa70b</color>
+    <color name="Event_AllDay_Warm">#aad5b4ae</color>
+    <color name="Event_OnMyOwn_Warm">#ffd8e8b0</color>
+    <color name="Event_Separator_Warm">#ff80213a</color>
 
 </resources>

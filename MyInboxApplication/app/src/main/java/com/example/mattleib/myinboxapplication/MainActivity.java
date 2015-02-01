@@ -1,10 +1,10 @@
 package com.example.mattleib.myinboxapplication;
 
 import android.app.ProgressDialog;
-import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -59,6 +59,28 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
      */
     private static Menu mMenu = null;
 
+    /**
+     * Configuration for Runtime: PPE and PROD
+     */
+    private final static AppConfig[] mAppEnvironment = {
+            new AppConfig(
+                    Constants.AAD_Authority,
+                    Constants.AAD_Client_ID,
+                    Constants.AAD_RedirectUri,
+                    Constants.O365_ExchangeOnline,
+                    Constants.O365_UserHint,
+                    Constants.O365_EventsQueryTemplate
+            ),
+            new AppConfig(
+                    Constants.PPE_AAD_Authority,
+                    Constants.PPE_AAD_Client_ID,
+                    Constants.PPE_AAD_RedirectUri,
+                    Constants.PPE_O365_ExchangeOnline,
+                    Constants.PPE_O365_UserHint,
+                    Constants.PPE_O365_EventsQueryTemplate
+            )
+    };
+    private static int mAppEnvIndex = Constants.IDX_PROD;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,21 +104,35 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         }
 
         /**
+         * Read the current environment the app operates on
+         */
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean usePPE = sharedPreferences.getBoolean(Constants.PreferenceKeys.UsePPE, false);
+        if (usePPE) {
+            mAppEnvIndex = Constants.IDX_PPE;
+        } else {
+            mAppEnvIndex = Constants.IDX_PROD;
+        }
+
+        /**
          * Login, Get AccessToken, and Pre-fill the EventList
          */
-        SignOn();
+        SignOn(true);
+        Toast.makeText(getApplicationContext(), "Welcome. Let's get busy!", Toast.LENGTH_SHORT).show();
     }
 
-    private void SignOn() {
+    private void SignOn(boolean showProgressDialog) {
         final ProgressDialog mLoginProgressDialog = new ProgressDialog(this);
-        mLoginProgressDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        mLoginProgressDialog.setMessage("Login in progress...");
-        mLoginProgressDialog.show();
+        if(showProgressDialog) {
+            mLoginProgressDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            mLoginProgressDialog.setMessage("Login in progress...");
+            mLoginProgressDialog.show();
+        }
         // Ask for token and provide callback
         try {
             mAuthContext = new AuthenticationContext(
                     MainActivity.this,
-                    Constants.AAD_Authority,
+                    mAppEnvironment[mAppEnvIndex].getAuthority(),
                     false,
                     InMemoryCacheStore.getInstance());
 
@@ -104,10 +140,10 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
 
             mAuthContext.acquireToken(
                     MainActivity.this,
-                    Constants.O365_ExchangeOnline,
-                    Constants.AAD_Client_ID,
-                    Constants.AAD_RedirectUri,
-                    Constants.O365_UserHint,
+                    mAppEnvironment[mAppEnvIndex].getResourceExchange(),
+                    mAppEnvironment[mAppEnvIndex].getClientId(),
+                    mAppEnvironment[mAppEnvIndex].getRedirectUri(),
+                    mAppEnvironment[mAppEnvIndex].getUserHint(),
                     PromptBehavior.Auto,
                     "",
                     new AuthenticationCallback<AuthenticationResult>() {
@@ -132,7 +168,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                                 /**
                                  * Get Events for Today
                                  */
-                                getAllEvents();
+                                getAllEvents(true);
                             } else {
                                 SimpleAlertDialog.showAlertDialog(MainActivity.this,
                                         "Failed to acquire token", "");
@@ -169,11 +205,35 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             PreferenceSettings preference = (PreferenceSettings)data.getSerializableExtra(PreferenceSettings.SER_KEY);
 
             if(preference.getUsePPE().getHasChanged()) {
-                String s = "";
+                if (preference.getUsePPE().getNewValue().equals("true")) {
+                    mAppEnvIndex = Constants.IDX_PPE;
+                } else {
+                    mAppEnvIndex = Constants.IDX_PROD;
+                }
+                SignOut();
+                SignOn(true);
+                return;
             }
             if(preference.getEventTimeSpan().getHasChanged()) {
-                getAllEvents();
+                getAllEvents(true);
+                return;
             }
+            if(preference.getUseCoolColor().getHasChanged()) {
+                getAllEvents(false);
+            }
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        boolean mOrientationChange;
+        // Checks the orientation of the screen
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            mOrientationChange = true;
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            mOrientationChange = true;
         }
     }
 
@@ -213,7 +273,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             item.setVisible(false);
             MenuItem m = mMenu.findItem(R.id.action_logout);
             m.setVisible(true);
-            SignOn();
+            SignOn(true);
             return true;
         }
 
@@ -226,13 +286,14 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
      */
     public void onRefreshEvents()
     {
-        getAllEvents();
+        // SignOn(false); // get a new AccessToken and Get the events
+        getAllEvents(true);
     }
 
     /**
      * Get the events and Re-Fill the list
      */
-    private void getAllEvents()
+    private void getAllEvents(boolean requery)
     {
         if(mCurrentAuthenticationResult == null ||
            mCurrentAuthenticationResult.getAccessToken().isEmpty())
@@ -249,15 +310,28 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         }
 
         /**
+         * Only force a refresh of the current screen
+         */
+        if(!requery) {
+            mEventsAdapter.notifyDataSetChanged();
+        }
+
+        /**
          * Get the preference
          */
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String eventSpan = sharedPreferences.getString("PREF_CALENDAR_SPAN", "day");
-        String eventsQuery = Helpers.GetEventsQueryString(DataTypes.EventTimeSpan.Day);
+        String eventSpan = sharedPreferences.getString(Constants.PreferenceKeys.CalendarTimeSpan, "day");
+        String eventsQuery = Helpers.GetEventsQueryString(
+                mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
+                DataTypes.EventTimeSpan.Day);
         if(eventSpan.equals("week")) { /// week
-            eventsQuery = Helpers.GetEventsQueryString(DataTypes.EventTimeSpan.Week);
+            eventsQuery = Helpers.GetEventsQueryString(
+                    mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
+                    DataTypes.EventTimeSpan.Week);
         } else if (eventSpan.equals("month")) { /// month
-            eventsQuery = Helpers.GetEventsQueryString(DataTypes.EventTimeSpan.Month);
+            eventsQuery = Helpers.GetEventsQueryString(
+                    mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
+                    DataTypes.EventTimeSpan.Month);
         }
 
         /**
@@ -267,23 +341,22 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 eventsQuery,
                 mCurrentAuthenticationResult.getAccessToken()
                 );
-
-        Toast.makeText(getApplicationContext(), MODNAME + "::GetAllEvents.Complete", Toast.LENGTH_SHORT).show();
     }
 
     /**
      * Adapter to get Events
      */
-    public class EventsAdapter extends ArrayAdapter<EventItem> {
+    public class EventsAdapter extends ArrayAdapter<Item> {
 
-        private List<EventItem> itemList;
+        private ArrayList<Item> itemList;
         private Context context;
-        private String mDate = "ForceDisplay";
+        private LayoutInflater vi;
 
-        public EventsAdapter(List<EventItem> itemList, Context ctx) {
+        public EventsAdapter(ArrayList itemList, Context ctx) {
             super(ctx, android.R.layout.simple_list_item_1, itemList);
             this.itemList = itemList;
             this.context = ctx;
+            this.vi = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
 
         public int getCount() {
@@ -292,7 +365,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             return 0;
         }
 
-        public EventItem getItem(int position) {
+        public Item getItem(int position) {
             if (itemList != null)
                 return itemList.get(position);
             return null;
@@ -308,67 +381,122 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         public View getView(int position, View convertView, ViewGroup parent) {
 
             View v = convertView;
-            if (v == null) {
-                LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                v = inflater.inflate(R.layout.eventitem_row_layout, null);
+
+            final Item i = getItem(position);
+            if(i == null)
+               return v;
+
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            boolean useCoolColors = preferences.getBoolean(Constants.PreferenceKeys.UseCoolColors, false);
+
+            if(i.isItemType() == DataTypes.ItemType.section) {
+                v = vi.inflate(R.layout.eventsection_row_layout, null);
+
+                if(useCoolColors) {
+                    v.setBackgroundColor(getResources().getColor(R.color.Event_Separator_Cool));
+                } else {
+                    v.setBackgroundColor(getResources().getColor(R.color.Event_Separator_Warm));
+                }
+
+                SectionItem si = (SectionItem)i;
+                LocalDateTimeConverter startTime = new LocalDateTimeConverter(si.getUtcEventStartTime());
+
+                TextView text = (TextView) v.findViewById(R.id.day_of_week);
+                text.setText(
+                        startTime.getLocalDayOfWeekString() + ",  " + startTime.getLocalDayString()
+                );
+
+            } else if (i.isItemType() == DataTypes.ItemType.event) {
+                v = vi.inflate(R.layout.eventitem_row_layout, null);
+
+                EventItem e = (EventItem) i;
+                LocalDateTimeConverter startTime = new LocalDateTimeConverter(e.getStart());
+                LocalDateTimeConverter endTime = new LocalDateTimeConverter(e.getEnd());
+
+                if (startTime.IsAm()) {
+                    if(useCoolColors) {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_Normal_AM_Cool));
+                    } else {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_Normal_AM_Warm));
+                    }
+                } else {
+                    if(useCoolColors) {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_Normal_PM_Cool));
+                    } else {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_Normal_PM_Warm));
+                    }
+                }
+
+                TextView subject = (TextView) v.findViewById(R.id.subject);
+                subject.setText(e.getSubject());
+
+                TextView start = (TextView) v.findViewById(R.id.startend);
+                String localStartTime = startTime.getLocalTimeString();
+                String localEndTime = endTime.getLocalTimeString();
+                String localEndDay = endTime.getLocalDayString();
+                if (e.IsAllDay) {
+                    localEndDay = "All Day Event";
+                    if(useCoolColors) {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_AllDay_Cool));
+                    } else {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_AllDay_Warm));
+                    }
+                }
+                start.setText(localStartTime + " to " + localEndTime + " (" + localEndDay + ")");
+
+                TextView location = (TextView) v.findViewById(R.id.location);
+                if (e.getLocation() == null) {
+                    location.setVisibility(View.GONE);
+                } else if (e.getLocation().getDisplayName().isEmpty()) {
+                    location.setVisibility(View.GONE);
+                } else {
+                    location.setText("Location: " + e.getLocation().getDisplayName());
+                }
+
+                TextView organizer = (TextView) v.findViewById(R.id.organizer);
+                if (e.getOrganizer() == null) {
+                    organizer.setVisibility(View.GONE);
+                    if(useCoolColors) {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_OnMyOwn_Cool));
+                    } else {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_OnMyOwn_Warm));
+                    }
+                } else if (e.getOrganizer().getEmailAddress().getName().isEmpty()) {
+                    organizer.setVisibility(View.GONE);
+                    if(useCoolColors) {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_OnMyOwn_Cool));
+                    } else {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_OnMyOwn_Warm));
+                    }
+                } else {
+                    organizer.setText("Organizer: " + e.getOrganizer().getEmailAddress().getName());
+                }
+
+                if (e.getIsCancelled()) {
+                    if(useCoolColors) {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_Canceled_Cool));
+                    } else {
+                        v.setBackgroundColor(getResources().getColor(R.color.Event_Canceled_Warm));
+                    }
+                }
+
+            } else { // empty Item
+                v = vi.inflate(R.layout.empty_row_layout, null);
+
+                if(useCoolColors) {
+                    v.setBackgroundColor(getResources().getColor(R.color.Event_Separator_Cool));
+                } else {
+                    v.setBackgroundColor(getResources().getColor(R.color.Event_Separator_Warm));
+                }
             }
-
-            v.setBackgroundColor(getResources().getColor(R.color.Event_Normal));
-
-            EventItem e = itemList.get(position);
-
-            TextView text4 = (TextView) v.findViewById(R.id.organizer);
-            if(e.getOrganizer() == null) {
-                text4.setVisibility(View.GONE);
-                v.setBackgroundColor(getResources().getColor(R.color.Event_OnMyOwn));
-            } else {
-                text4.setText("Organizer: " + e.getOrganizer().getEmailAddress().getName());
-            }
-
-            String eventDay = Helpers.ConvertUtcDateToLocalDay(e.getStart());
-            TextView separator = (TextView) v.findViewById(R.id.date_separator);
-            if(eventDay.equals(mDate)) {
-                separator.setVisibility(View.GONE);
-            } else {
-                separator.setText(eventDay);
-                mDate = eventDay;
-            }
-
-            TextView text = (TextView) v.findViewById(R.id.subject);
-            text.setText(e.getSubject());
-
-            TextView text1 = (TextView) v.findViewById(R.id.start);
-            String localTime = Helpers.ConvertUtcDateToLocalTime(e.getStart());
-            text1.setText(localTime);
-
-            TextView text2 = (TextView) v.findViewById(R.id.end);
-            if(e.IsAllDay) {
-                text2.setText("(All Day Event)");
-                v.setBackgroundColor(getResources().getColor(R.color.Event_AllDay));
-            } else {
-                localTime = Helpers.ConvertUtcDateToLocalTime(e.getEnd());
-                text2.setText("("+localTime+")");
-            }
-
-            TextView text3 = (TextView) v.findViewById(R.id.location);
-            if(e.getLocation() == null) {
-                text3.setVisibility(View.GONE);
-            } else {
-                text3.setText("Location: " + e.getLocation().getDisplayName());
-            }
-
-            if(e.getIsCancelled()) {
-                v.setBackgroundColor(getResources().getColor(R.color.Event_Canceled));
-            }
-
             return v;
         }
 
-        public List<EventItem> getItemList() {
+        public ArrayList<Item> getItemList() {
             return itemList;
         }
 
-        public void setItemList(List<EventItem> itemList) {
+        public void setItemList(ArrayList<Item> itemList) {
             this.itemList = itemList;
         }
     }
@@ -376,12 +504,13 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
     /**
      * Load Events in Background
      */
-    public class GetContactsListAsync extends AsyncTask<String, Void, List<EventItem>> {
+    public class GetContactsListAsync extends AsyncTask<String, Void, ArrayList<Item>> {
 
         private final ProgressDialog dialog = new ProgressDialog(MainActivity.this);
+        private String mLastSectionDate = "ForceDisplay";
 
         @Override
-        protected void onPostExecute(List<EventItem> result) {
+        protected void onPostExecute(ArrayList<Item> result) {
             super.onPostExecute(result);
             dialog.dismiss();
             mEventsAdapter.setItemList(result);
@@ -396,12 +525,12 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         }
 
         @Override
-        protected List<EventItem> doInBackground(String... params) {
+        protected ArrayList<Item> doInBackground(String... params) {
 
             HttpURLConnection conn = null;
             BufferedReader br = null;
             try {
-                List<EventItem> items = new ArrayList<EventItem>();
+                ArrayList<Item> items = new ArrayList();
 
                 URL url = new URL(params[0]);
                 conn = (HttpURLConnection) url.openConnection();
@@ -420,7 +549,21 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 JSONArray jsonArray = obj.getJSONArray("value");
                 for (int i = 0; i < jsonArray.length(); i++) {
                     obj = jsonArray.getJSONObject(i);
-                    items.add(new EventItem(obj));
+
+                    EventItem event = new EventItem(obj) ;
+
+                    // Do we need to add a section item?
+                    String eventDay = (new LocalDateTimeConverter(event.getStart())).getLocalDayString();
+                    if(!(eventDay.equals(mLastSectionDate))) {
+                        mLastSectionDate = eventDay; // new Section
+                        items.add(new SectionItem(event.getStart()));
+                    }
+
+                    items.add(event);
+                }
+
+                if(items.isEmpty()) {
+                    items.add(new EmptyItem());
                 }
 
                 return items;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Office 365 Calendar Events Viewer</string>
+    <string name="app_name">Office 365 My Upcoming Events</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Preferences</string>
     <string name="action_logout">Logout</string>
@@ -13,7 +13,13 @@
     <string name="preference_ppe_summary">Use the Pre-production environment. This is for testing only.</string>
     <string name="preference_ppe_default">false</string>
     <string name="preference_eventspan_title">Events timespan</string>
-    <string name="preference_eventspan_summmary">Select the time interval to retrieve events.</string>
-    <string name="preference_eventspan_default">day</string>
+    <string name="preference_eventspan_summary">Select the time interval to retrieve events. Currently set to</string>
+    <string name="preference_eventspan_default">week</string>
+
+    <string name="preference_color_title">Use cool colors</string>
+    <string name="preference_color_summary">Change the color palette to use cooler color tones.</string>
+    <string name="preference_color_default">false</string>
+
+    <string name="no_events">No events available for selected interval. Select different interval in preferences and refresh.</string>
 
 </resources>

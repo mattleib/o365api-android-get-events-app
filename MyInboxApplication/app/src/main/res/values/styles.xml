@@ -7,35 +7,20 @@
 
     <style name="ListItem" parent="android:Theme.Light">
         <item name="android:textColor">@color/MyBlack</item>
+        <item name="android:paddingLeft">5dp</item>
+        <item name="android:paddingRight">5dp</item>
     </style>
 
-    <style name="ItemSeparator" parent="ListItem">
-        <item name="android:windowBackground">@color/MyPurple</item>
-        <item name="android:colorBackground">@color/MyPurple</item>
-        <item name="android:gravity">center</item>
+    <style name="ListItemWhite" parent="android:Theme.Light">
+        <item name="android:textColor">@color/MyWhite</item>
+        <item name="android:paddingLeft">5dp</item>
+        <item name="android:paddingRight">5dp</item>
+    </style>
+
+    <style name="ItemSeparator" parent="ListItemWhite">
+<!--        <item name="android:background">@color/Event_Separator</item> -->
         <item name="android:textSize">16dp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:background">@color/MyPurple</item>
-    </style>
-
-    <style name="CanceledEvent" parent="ListItem">
-        <item name="android:windowBackground">@color/MyGrey</item>
-        <item name="android:colorBackground">@color/MyGrey</item>
-    </style>
-
-    <style name="NormalEvent" parent="ListItem">
-        <item name="android:windowBackground">@color/MyYellow</item>
-        <item name="android:colorBackground">@color/MyYellow</item>
-    </style>
-
-    <style name="AllDayEvent" parent="ListItem">
-        <item name="android:windowBackground">@color/MyRed</item>
-        <item name="android:colorBackground">@color/MyRed</item>
-    </style>
-
-    <style name="OnMyOwnEvent" parent="ListItem">
-        <item name="android:windowBackground">@color/MyGreen</item>
-        <item name="android:colorBackground">@color/MyGreen</item>
     </style>
 
 </resources>
