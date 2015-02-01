@@ -314,6 +314,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
          */
         if(!requery) {
             mEventsAdapter.notifyDataSetChanged();
+            return;
         }
 
         /**
