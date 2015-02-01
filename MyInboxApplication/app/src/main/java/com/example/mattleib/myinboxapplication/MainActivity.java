@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity implements com.example.mattleib.myinboxapplication.EventItemsFragment.EventRefresh,SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends ActionBarActivity implements com.example.mattleib.myinboxapplication.EventItemsFragment.EventRefresh {
 
     /**
      * Name of the Module for Error display's etc.
@@ -54,6 +54,12 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
      */
     private static EventsAdapter mEventsAdapter = null;
 
+    /**
+     * The activities menu
+     */
+    private static Menu mMenu = null;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,7 +69,6 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
          * Read default preferences. Initialize with defaults.
          */
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         if (savedInstanceState == null) {
 
@@ -77,8 +82,12 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         }
 
         /**
-         * Login and get AccessToken
+         * Login, Get AccessToken, and Pre-fill the EventList
          */
+        SignOn();
+    }
+
+    private void SignOn() {
         final ProgressDialog mLoginProgressDialog = new ProgressDialog(this);
         mLoginProgressDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         mLoginProgressDialog.setMessage("Login in progress...");
@@ -135,11 +144,36 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         }
     }
 
+    private void SignOut() {
+        if (mAuthContext != null) {
+            mAuthContext.getCache().removeAll();
+        }
+
+        if(mEventsAdapter != null) {
+            mEventsAdapter.itemList.clear();
+            mEventsAdapter.clear();
+            mEventsAdapter.notifyDataSetChanged();
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
         super.onActivityResult(requestCode, resultCode, data);
         if (mAuthContext != null) {
             mAuthContext.onActivityResult(requestCode, resultCode, data);
+        }
+
+        if(requestCode == Constants.PICK_PREFERENCE_REQUEST){
+
+            PreferenceSettings preference = (PreferenceSettings)data.getSerializableExtra(PreferenceSettings.SER_KEY);
+
+            if(preference.getUsePPE().getHasChanged()) {
+                String s = "";
+            }
+            if(preference.getEventTimeSpan().getHasChanged()) {
+                getAllEvents();
+            }
         }
     }
 
@@ -147,6 +181,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        mMenu = menu;
         return true;
     }
 
@@ -160,23 +195,31 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             /**
-             * Start preferences
+             * Start preferences selection
              */
-            startActivity(new Intent(this, SettingsActivity.class));
+            startActivityForResult(new Intent(this, SettingsActivity.class), Constants.PICK_PREFERENCE_REQUEST);
+            return true;
+        }
+
+        if (id == R.id.action_logout) {
+            item.setVisible(false);
+            MenuItem m = mMenu.findItem(R.id.action_login);
+            m.setVisible(true);
+            SignOut();
+            return true;
+        }
+
+        if (id == R.id.action_login) {
+            item.setVisible(false);
+            MenuItem m = mMenu.findItem(R.id.action_logout);
+            m.setVisible(true);
+            SignOn();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * The interface that listens to Preference changes
-     */
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals("PREF_CALENDAR_SPAN")) {
-            getAllEvents();
-        }
-    }
 
     /**
      * The interface for fragment to notify to Refresh events
@@ -198,10 +241,12 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         /**
          * Get events and fill the list
          */
-        mEventsAdapter = new EventsAdapter(new ArrayList<EventItem>(), getApplicationContext());
-        ListView lView = (ListView) findViewById(R.id.eventItemList);
+        if(mEventsAdapter == null) {
+            mEventsAdapter = new EventsAdapter(new ArrayList<EventItem>(), getApplicationContext());
+            ListView lView = (ListView) findViewById(R.id.eventItemList);
 
-        lView.setAdapter(mEventsAdapter);
+            lView.setAdapter(mEventsAdapter);
+        }
 
         /**
          * Get the preference

@@ -17,6 +17,7 @@ public class SettingsFragment extends PreferenceFragment
      */
     public interface EventTimespanChanged{
         public void onNewTimeSpan(String timeSpan);
+        public void onEnvironmentChanged(Boolean usePPE);
     }// end interface
 
     // Instantiate the Interface Callback
@@ -46,6 +47,9 @@ public class SettingsFragment extends PreferenceFragment
         if (key.equals(Constants.PreferenceKeys.CalendarTimeSpan)) {
             String newValue = sharedPreferences.getString(key, "");
             mCallback.onNewTimeSpan(newValue);
+        } else if (key.equals(Constants.PreferenceKeys.UsePPE)) {
+            Boolean newValue = sharedPreferences.getBoolean(key, false);
+            mCallback.onEnvironmentChanged(newValue);
         }
     }
 
