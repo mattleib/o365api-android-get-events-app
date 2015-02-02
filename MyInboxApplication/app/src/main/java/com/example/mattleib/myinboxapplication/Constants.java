@@ -23,7 +23,7 @@ public class Constants {
     public static final String PPE_AAD_RedirectUri = "https://myinboxapplication";
     public static final String PPE_AAD_Authority = "https://login.windows-ppe.net/common";
     public static final String PPE_O365_ExchangeOnline = "https://sdfpilot.outlook.com/";
-    public static final String PPE_O365_UserHint = "";
+    public static final String PPE_O365_UserHint = "mattleib@ntdev.microsoft.com";
     public static final String PPE_O365_EventsQueryTemplate = "https://sdfpilot.outlook.com/api/v1.0/me/calendarview?startdatetime=%sT%sZ&enddatetime=%sT%sZ&$top=50&$orderby=Start";
 
     /**

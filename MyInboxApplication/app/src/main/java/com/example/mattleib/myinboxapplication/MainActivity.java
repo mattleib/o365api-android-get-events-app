@@ -24,6 +24,7 @@ import com.microsoft.aad.adal.AuthenticationCallback;
 import com.microsoft.aad.adal.AuthenticationContext;
 import com.microsoft.aad.adal.AuthenticationResult;
 import com.microsoft.aad.adal.PromptBehavior;
+import com.microsoft.aad.adal.UserInfo;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -48,11 +49,17 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
      */
     private static AuthenticationContext mAuthContext = null;
     private static AuthenticationResult mCurrentAuthenticationResult = null;
+    private static UserInfo mCurrentUser = null;
 
     /**
      * Adapter to fill the events list
      */
     private static EventsAdapter mEventsAdapter = null;
+
+    /**
+     * In memory holding of event items
+     */
+    private static ArrayList<Item> mEventsItems = null;
 
     /**
      * The activities menu
@@ -82,6 +89,21 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
     };
     private static int mAppEnvIndex = Constants.IDX_PROD;
 
+
+    /**
+     * Set the current environment the app operates on
+     */
+    private void GetCurrentAppEnvironmentSettings()
+    {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean usePPE = sharedPreferences.getBoolean(Constants.PreferenceKeys.UsePPE, false);
+        if (usePPE) {
+            mAppEnvIndex = Constants.IDX_PPE;
+        } else {
+            mAppEnvIndex = Constants.IDX_PROD;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,17 +126,6 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         }
 
         /**
-         * Read the current environment the app operates on
-         */
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean usePPE = sharedPreferences.getBoolean(Constants.PreferenceKeys.UsePPE, false);
-        if (usePPE) {
-            mAppEnvIndex = Constants.IDX_PPE;
-        } else {
-            mAppEnvIndex = Constants.IDX_PROD;
-        }
-
-        /**
          * Login, Get AccessToken, and Pre-fill the EventList
          */
         SignOn(true);
@@ -122,6 +133,11 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
     }
 
     private void SignOn(boolean showProgressDialog) {
+        /**
+         * Read the current environment the app operates on
+         */
+        GetCurrentAppEnvironmentSettings();
+
         final ProgressDialog mLoginProgressDialog = new ProgressDialog(this);
         if(showProgressDialog) {
             mLoginProgressDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -136,7 +152,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                     false,
                     InMemoryCacheStore.getInstance());
 
-            mAuthContext.getCache().removeAll();
+            // why? -- mAuthContext.getCache().removeAll();
 
             mAuthContext.acquireToken(
                     MainActivity.this,
@@ -165,6 +181,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
 
                             if (result != null && !result.getAccessToken().isEmpty()) {
                                 mCurrentAuthenticationResult = result;
+                                mCurrentUser = mCurrentAuthenticationResult.getUserInfo();
                                 /**
                                  * Get Events for Today
                                  */
@@ -183,12 +200,38 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
     private void SignOut() {
         if (mAuthContext != null) {
             mAuthContext.getCache().removeAll();
+            mAuthContext = null;
+            mCurrentAuthenticationResult = null;
         }
 
         if(mEventsAdapter != null) {
             mEventsAdapter.itemList.clear();
             mEventsAdapter.clear();
             mEventsAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private boolean RefreshToken() {
+        if(mCurrentUser == null)
+            return false;
+
+        GetCurrentAppEnvironmentSettings();
+        try {
+            mAuthContext = new AuthenticationContext(
+                    MainActivity.this,
+                    mAppEnvironment[mAppEnvIndex].getAuthority(),
+                    false,
+                    InMemoryCacheStore.getInstance());
+
+            mAuthContext.acquireTokenSilentSync(
+                    mAppEnvironment[mAppEnvIndex].getResourceExchange(),
+                    mAppEnvironment[mAppEnvIndex].getClientId(),
+                    mCurrentUser.getUserId()
+                    );
+            return true;
+        } catch (Exception e) {
+            SimpleAlertDialog.showAlertDialog(getApplicationContext(), "Exception caught refreshing tokens", e.getMessage());
+            return false;
         }
     }
 
@@ -210,8 +253,15 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 } else {
                     mAppEnvIndex = Constants.IDX_PROD;
                 }
+
+                MenuItem menuLogin = mMenu.findItem(R.id.action_login);
+                menuLogin.setVisible(true);
+
+                MenuItem menuLogout = mMenu.findItem(R.id.action_logout);
+                menuLogout.setVisible(false);
+
                 SignOut();
-                SignOn(true);
+
                 return;
             }
             if(preference.getEventTimeSpan().getHasChanged()) {
@@ -252,7 +302,6 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             /**
              * Start preferences selection
@@ -265,7 +314,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             item.setVisible(false);
             MenuItem m = mMenu.findItem(R.id.action_login);
             m.setVisible(true);
+
             SignOut();
+
             return true;
         }
 
@@ -273,7 +324,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             item.setVisible(false);
             MenuItem m = mMenu.findItem(R.id.action_logout);
             m.setVisible(true);
+
             SignOn(true);
+
             return true;
         }
 
@@ -286,7 +339,6 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
      */
     public void onRefreshEvents()
     {
-        // SignOn(false); // get a new AccessToken and Get the events
         getAllEvents(true);
     }
 
@@ -295,22 +347,30 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
      */
     private void getAllEvents(boolean requery)
     {
-        if(mCurrentAuthenticationResult == null ||
-           mCurrentAuthenticationResult.getAccessToken().isEmpty())
-            return; // Nothing to do
+        if(!RefreshToken())
+            return;
+
+        ArrayList<Item> eventsList;
+        if(!requery
+                && mEventsItems != null
+                && !(mEventsItems.isEmpty())
+                ) {
+            eventsList = mEventsItems;
+        } else {
+            eventsList = new ArrayList<Item>();
+            requery = true;
+        }
 
         /**
          * Get events and fill the list
          */
-        if(mEventsAdapter == null) {
-            mEventsAdapter = new EventsAdapter(new ArrayList<EventItem>(), getApplicationContext());
-            ListView lView = (ListView) findViewById(R.id.eventItemList);
-
-            lView.setAdapter(mEventsAdapter);
-        }
+        mEventsAdapter = new EventsAdapter(eventsList, getApplicationContext());
+        ListView lView = (ListView) findViewById(R.id.eventItemList);
+        lView.setAdapter(mEventsAdapter);
 
         /**
-         * Only force a refresh of the current screen
+         * Only force a refresh of the current screen,
+         * but don't request new events from Office 365
          */
         if(!requery) {
             mEventsAdapter.notifyDataSetChanged();
@@ -318,21 +378,28 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         }
 
         /**
-         * Get the preference
+         * Get the preference and build the query to receive events from Office 365 APIs
          */
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String eventSpan = sharedPreferences.getString(Constants.PreferenceKeys.CalendarTimeSpan, "day");
-        String eventsQuery = Helpers.GetEventsQueryString(
-                mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
-                DataTypes.EventTimeSpan.Day);
+        String eventsQuery = "";
+
         if(eventSpan.equals("week")) { /// week
+
             eventsQuery = Helpers.GetEventsQueryString(
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
                     DataTypes.EventTimeSpan.Week);
+
         } else if (eventSpan.equals("month")) { /// month
+
             eventsQuery = Helpers.GetEventsQueryString(
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
                     DataTypes.EventTimeSpan.Month);
+        } else {
+
+            eventsQuery = Helpers.GetEventsQueryString(
+                    mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
+                    DataTypes.EventTimeSpan.Day);
         }
 
         /**
@@ -484,6 +551,14 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             } else { // empty Item
                 v = vi.inflate(R.layout.empty_row_layout, null);
 
+                EmptyItem e = (EmptyItem) i;
+                if(!e.getErrorMessage().isEmpty())
+                {
+                    TextView text = (TextView) v.findViewById(R.id.no_events_text);
+                    String currentText = text.getText().toString();
+                    text.setText(currentText + " Error: " + e.getErrorMessage());
+                }
+
                 if(useCoolColors) {
                     v.setBackgroundColor(getResources().getColor(R.color.Event_Separator_Cool));
                 } else {
@@ -567,9 +642,21 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                     items.add(new EmptyItem());
                 }
 
+                // remember the last result ser for refresh
+                mEventsItems = items;
+
                 return items;
+
             } catch (Exception e) {
-                return new ArrayList<>();
+
+                ArrayList<Item> items = new ArrayList();
+                items.add(new EmptyItem(e.getMessage()));
+
+                // remember the last result ser for refresh
+                mEventsItems = items;
+
+                return items;
+
             } finally {
                 AppHelper.close(br);
                 if (conn != null) {

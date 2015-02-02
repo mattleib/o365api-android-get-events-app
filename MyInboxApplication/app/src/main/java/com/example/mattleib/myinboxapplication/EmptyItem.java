@@ -11,4 +11,20 @@ public class EmptyItem implements Serializable, Item {
         return DataTypes.ItemType.empty;
     }
 
+    protected String ErrorMessage;
+
+    public EmptyItem() {
+        ErrorMessage = "";
+    }
+    public EmptyItem(String errorMessage) {
+        ErrorMessage = errorMessage;
+    }
+
+    public String getErrorMessage() {
+        return ErrorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        ErrorMessage = errorMessage;
+    }
 }
