@@ -1,6 +1,8 @@
 package com.example.mattleib.myinboxapplication;
 
+import android.content.SharedPreferences;
 import android.text.format.Time;
+import android.util.Log;
 
 import org.json.JSONObject;
 
@@ -15,6 +17,28 @@ import java.util.TimeZone;
  * Created by mattleib on 1/28/2015.
  */
 public class Helpers {
+
+    public static String LogEnterMethod(String methodName)
+    {
+        return "*Entering [" + methodName + "]";
+    }
+
+    public static String LogLeaveMethod(String methodName)
+    {
+        return "*Leaving [" + methodName + "]";
+    }
+
+    public static String LogInMethod(String methodName)
+    {
+        return "**Working in [" + methodName + "]";
+    }
+
+    public static void LogIfNull(String tag, Object obj, String objectName)
+    {
+        if(obj == null){
+            Log.d(tag, "NullObject::" + objectName);
+        }
+    }
 
     public static JSONObject TryGetJSONObject(JSONObject sourceObject, String name)
     {

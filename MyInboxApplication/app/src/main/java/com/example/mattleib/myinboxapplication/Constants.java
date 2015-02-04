@@ -33,6 +33,7 @@ public class Constants {
         public static String CalendarTimeSpan = "PREF_CALENDAR_SPAN";
         public static String UsePPE = "PREF_USEPPE";
         public static String UseCoolColors = "PREF_USECOOL";
+        public static String RefreshToken = "PREF_REFRESHTOKEN";
     }
 
     public static final int PICK_PREFERENCE_REQUEST = 1;

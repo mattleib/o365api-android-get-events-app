@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,9 +41,9 @@ import java.util.List;
 public class MainActivity extends ActionBarActivity implements com.example.mattleib.myinboxapplication.EventItemsFragment.EventRefresh {
 
     /**
-     * Name of the Module for Error display's etc.
+     * Name of the Module for Logcat display's etc.
      */
-    private static String MODNAME = "MainActivity";
+    private static String TAG = "MainActivity";
 
     /**
      * ADAL authentication context and result for app
@@ -95,6 +96,8 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
      */
     private void GetCurrentAppEnvironmentSettings()
     {
+        Log.d(TAG, Helpers.LogEnterMethod("GetCurrentAppEnvironmentSettings"));
+
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         boolean usePPE = sharedPreferences.getBoolean(Constants.PreferenceKeys.UsePPE, false);
         if (usePPE) {
@@ -102,10 +105,38 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         } else {
             mAppEnvIndex = Constants.IDX_PROD;
         }
+
+        Log.d(TAG, Helpers.LogLeaveMethod("GetCurrentAppEnvironmentSettings"));
+    }
+
+    public void SaveRefreshToken(String refreshToken)
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("SaveRefreshToken"));
+
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(Constants.PreferenceKeys.RefreshToken, refreshToken);
+        editor.commit();
+
+        Log.d(TAG, Helpers.LogLeaveMethod("SaveRefreshToken"));
+    }
+
+    public String GetRefreshToken()
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("GetRefreshToken"));
+
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        String refreshToken = sharedPref.getString(Constants.PreferenceKeys.RefreshToken, "");
+
+        Log.d(TAG, Helpers.LogLeaveMethod("GetRefreshToken"));
+        return refreshToken;
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("onCreate"));
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -129,10 +160,16 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
          * Login, Get AccessToken, and Pre-fill the EventList
          */
         SignOn(true);
+
         Toast.makeText(getApplicationContext(), "Welcome. Let's get busy!", Toast.LENGTH_SHORT).show();
+
+        Log.d(TAG, Helpers.LogLeaveMethod("onCreate"));
     }
 
-    private void SignOn(boolean showProgressDialog) {
+    private void SignOn(boolean showProgressDialog)
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("SignOn"));
+
         /**
          * Read the current environment the app operates on
          */
@@ -152,8 +189,6 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                     false,
                     InMemoryCacheStore.getInstance());
 
-            // why? -- mAuthContext.getCache().removeAll();
-
             mAuthContext.acquireToken(
                     MainActivity.this,
                     mAppEnvironment[mAppEnvIndex].getResourceExchange(),
@@ -166,6 +201,8 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
 
                         @Override
                         public void onError(Exception exc) {
+                            Log.d(TAG, Helpers.LogInMethod("SignOn") + "::onError", exc);
+
                             if (mLoginProgressDialog.isShowing()) {
                                 mLoginProgressDialog.dismiss();
                             }
@@ -175,6 +212,8 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
 
                         @Override
                         public void onSuccess(AuthenticationResult result) {
+                            Log.d(TAG, Helpers.LogInMethod("SignOn") + "::onSuccess");
+
                             if (mLoginProgressDialog.isShowing()) {
                                 mLoginProgressDialog.dismiss();
                             }
@@ -182,6 +221,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                             if (result != null && !result.getAccessToken().isEmpty()) {
                                 mCurrentAuthenticationResult = result;
                                 mCurrentUser = mCurrentAuthenticationResult.getUserInfo();
+                                SaveRefreshToken(mCurrentAuthenticationResult.getRefreshToken());
                                 /**
                                  * Get Events for Today
                                  */
@@ -193,11 +233,19 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                         }
                     });
         } catch (Exception e) {
+            Log.d(TAG, Helpers.LogInMethod("SignOn") + "::Exception", e);
+
             SimpleAlertDialog.showAlertDialog(getApplicationContext(), "Exception caught", e.getMessage());
+        }
+        finally {
+            Log.d(TAG, Helpers.LogLeaveMethod("SignOn"));
         }
     }
 
-    private void SignOut() {
+    private void SignOut()
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("SignOut"));
+
         if (mAuthContext != null) {
             mAuthContext.getCache().removeAll();
             mAuthContext = null;
@@ -209,11 +257,18 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             mEventsAdapter.clear();
             mEventsAdapter.notifyDataSetChanged();
         }
+
+        Log.d(TAG, Helpers.LogLeaveMethod("SignOut"));
     }
 
-    private boolean RefreshToken() {
-        if(mCurrentUser == null)
+    private boolean RefreshToken()
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("RefreshToken"));
+
+        if(mCurrentUser == null) {
+            Log.d(TAG, Helpers.LogInMethod("RefreshToken") + "::mCurrentUser == null");
             return false;
+        }
 
         GetCurrentAppEnvironmentSettings();
         try {
@@ -223,20 +278,29 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                     false,
                     InMemoryCacheStore.getInstance());
 
-            mAuthContext.acquireTokenSilentSync(
+            mCurrentAuthenticationResult = mAuthContext.acquireTokenSilentSync(
                     mAppEnvironment[mAppEnvIndex].getResourceExchange(),
                     mAppEnvironment[mAppEnvIndex].getClientId(),
                     mCurrentUser.getUserId()
                     );
+
             return true;
+
         } catch (Exception e) {
+            Log.d(TAG, Helpers.LogInMethod("RefreshToken") + "::Exception", e);
+
             SimpleAlertDialog.showAlertDialog(getApplicationContext(), "Exception caught refreshing tokens", e.getMessage());
             return false;
+        }
+        finally {
+            Log.d(TAG, Helpers.LogLeaveMethod("RefreshToken"));
         }
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("onActivityResult"));
 
         super.onActivityResult(requestCode, resultCode, data);
         if (mAuthContext != null) {
@@ -262,41 +326,58 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
 
                 SignOut();
 
+                Log.d(TAG, Helpers.LogLeaveMethod("onActivityResult"));
                 return;
             }
             if(preference.getEventTimeSpan().getHasChanged()) {
                 getAllEvents(true);
+
+                Log.d(TAG, Helpers.LogLeaveMethod("onActivityResult"));
                 return;
             }
             if(preference.getUseCoolColor().getHasChanged()) {
                 getAllEvents(false);
             }
         }
+
+        Log.d(TAG, Helpers.LogLeaveMethod("onActivityResult"));
     }
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
+    public void onConfigurationChanged(Configuration newConfig)
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("onConfigurationChanged"));
+
         super.onConfigurationChanged(newConfig);
 
-        boolean mOrientationChange;
         // Checks the orientation of the screen
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            mOrientationChange = true;
+            Toast.makeText(this, "Switching to Landscape", Toast.LENGTH_SHORT).show();
         } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-            mOrientationChange = true;
+            Toast.makeText(this, "Switching to Portrait", Toast.LENGTH_SHORT).show();
         }
+
+        Log.d(TAG, Helpers.LogLeaveMethod("onConfigurationChanged"));
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("onCreateOptionsMenu"));
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         mMenu = menu;
+
+        Log.d(TAG, Helpers.LogLeaveMethod("onCreateOptionsMenu"));
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("onOptionsItemSelected"));
+
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
@@ -307,28 +388,23 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
              * Start preferences selection
              */
             startActivityForResult(new Intent(this, SettingsActivity.class), Constants.PICK_PREFERENCE_REQUEST);
-            return true;
         }
-
-        if (id == R.id.action_logout) {
+        else if (id == R.id.action_logout) {
             item.setVisible(false);
             MenuItem m = mMenu.findItem(R.id.action_login);
             m.setVisible(true);
 
             SignOut();
-
-            return true;
         }
-
-        if (id == R.id.action_login) {
+        else if (id == R.id.action_login) {
             item.setVisible(false);
             MenuItem m = mMenu.findItem(R.id.action_logout);
             m.setVisible(true);
 
             SignOn(true);
-
-            return true;
         }
+
+        Log.d(TAG, Helpers.LogLeaveMethod("onOptionsItemSelected"));
 
         return super.onOptionsItemSelected(item);
     }
@@ -339,7 +415,11 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
      */
     public void onRefreshEvents()
     {
+        Log.d(TAG, Helpers.LogEnterMethod("onRefreshEvents"));
+
         getAllEvents(true);
+
+        Log.d(TAG, Helpers.LogLeaveMethod("onRefreshEvents"));
     }
 
     /**
@@ -347,16 +427,25 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
      */
     private void getAllEvents(boolean requery)
     {
-        if(!RefreshToken())
+        Log.d(TAG, Helpers.LogEnterMethod("getAllEvents"));
+
+        if(!RefreshToken()) {
+            Log.d(TAG, Helpers.LogInMethod("getAllEvents") + "::No New AccessToken. Re-signon");
+            SignOn(false);
+
+            Log.d(TAG, Helpers.LogLeaveMethod("getAllEvents"));
             return;
+        }
 
         ArrayList<Item> eventsList;
         if(!requery
                 && mEventsItems != null
                 && !(mEventsItems.isEmpty())
                 ) {
+            Log.d(TAG, Helpers.LogInMethod("getAllEvents") + "::Re-using mEventsItems" );
             eventsList = mEventsItems;
         } else {
+            Log.d(TAG, Helpers.LogInMethod("getAllEvents") + "::Need to fetch new event items" );
             eventsList = new ArrayList<Item>();
             requery = true;
         }
@@ -374,6 +463,8 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
          */
         if(!requery) {
             mEventsAdapter.notifyDataSetChanged();
+
+            Log.d(TAG, Helpers.LogLeaveMethod("getAllEvents") + "::Notified Adapter to refresh");
             return;
         }
 
@@ -409,13 +500,15 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 eventsQuery,
                 mCurrentAuthenticationResult.getAccessToken()
                 );
+
+        Log.d(TAG, Helpers.LogLeaveMethod("getAllEvents") + "::Background refresh of events submitted");
     }
 
     /**
      * Adapter to get Events
      */
-    public class EventsAdapter extends ArrayAdapter<Item> {
-
+    public class EventsAdapter extends ArrayAdapter<Item>
+    {
         private ArrayList<Item> itemList;
         private Context context;
         private LayoutInflater vi;
@@ -587,21 +680,32 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
 
         @Override
         protected void onPostExecute(ArrayList<Item> result) {
+
+            Log.d(TAG, Helpers.LogEnterMethod("GetContactsListAsync") + "::onPostExecute");
+
             super.onPostExecute(result);
             dialog.dismiss();
             mEventsAdapter.setItemList(result);
             mEventsAdapter.notifyDataSetChanged();
+
+            Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::onPostExecute");
         }
 
         @Override
         protected void onPreExecute() {
+            Log.d(TAG, Helpers.LogEnterMethod("GetContactsListAsync") + "::onPreExecute");
+
             super.onPreExecute();
             dialog.setMessage("Downloading events...");
             dialog.show();
+
+            Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::onPreExecute");
         }
 
         @Override
         protected ArrayList<Item> doInBackground(String... params) {
+
+            Log.d(TAG, Helpers.LogEnterMethod("GetContactsListAsync") + "::doInBackground");
 
             HttpURLConnection conn = null;
             BufferedReader br = null;
@@ -645,9 +749,12 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 // remember the last result ser for refresh
                 mEventsItems = items;
 
+                Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::doInBackground");
                 return items;
 
             } catch (Exception e) {
+
+                Log.d(TAG, Helpers.LogInMethod("GetContactsListAsync") + "::Exception", e);
 
                 ArrayList<Item> items = new ArrayList();
                 items.add(new EmptyItem(e.getMessage()));
@@ -655,6 +762,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 // remember the last result ser for refresh
                 mEventsItems = items;
 
+                Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::doInBackground");
                 return items;
 
             } finally {
@@ -664,6 +772,51 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 }
             }
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // The activity is about to become visible.
+    }
+
+    private void doNullChecks()
+    {
+        Helpers.LogIfNull(TAG, mAuthContext, "mAuthContext");
+        Helpers.LogIfNull(TAG, mCurrentAuthenticationResult, "mCurrentAuthenticationResult");
+        Helpers.LogIfNull(TAG, mCurrentUser, "mCurrentUser");
+        Helpers.LogIfNull(TAG, mEventsAdapter, "mEventsAdapter");
+        Helpers.LogIfNull(TAG, mEventsItems, "mEventsItems");
+        Helpers.LogIfNull(TAG, mMenu, "mMenu");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // The activity has become visible (it is now "resumed").
+        Log.d(TAG, Helpers.LogEnterMethod("onResume"));
+
+        doNullChecks();
+
+        Log.d(TAG, Helpers.LogLeaveMethod("onResume"));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Another activity is taking focus (this activity is about to be "paused").
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // The activity is no longer visible (it is now "stopped")
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // The activity is about to be destroyed.
     }
 
 }

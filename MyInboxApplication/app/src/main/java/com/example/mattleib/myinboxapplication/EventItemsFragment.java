@@ -56,7 +56,7 @@ public class EventItemsFragment extends Fragment {
                         mCallback.onRefreshEvents();
                         swipeView.setRefreshing(false);
                     }
-                }, 3000);
+                }, 1000);
             }
         });
 
