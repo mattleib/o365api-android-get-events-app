@@ -44,6 +44,7 @@ public class Constants {
     public static final int IDX_PROD = 0;
     public static final int IDX_PPE = 1;
 
+    public static final long OneMinuteInMilliseconds = 60000;
     public static final long OneHourInMilliseconds = 3600000;
 
     public static class VisualCues {

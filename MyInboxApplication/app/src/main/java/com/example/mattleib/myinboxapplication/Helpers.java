@@ -100,6 +100,9 @@ public class Helpers {
         //"End": "2015-01-23T21:00:00Z",
         Time startTime = new Time();
         startTime.parse3339(startTimeUtc);
+        long startTimeMilli = startTime.toMillis(false);
+        startTimeMilli = startTimeMilli - (Constants.OneMinuteInMilliseconds * 15); //Give 15 minute buffer
+        startTime.set(startTimeMilli);
 
         Time endTime = new Time();
         endTime.parse3339(endTimeUtc);
