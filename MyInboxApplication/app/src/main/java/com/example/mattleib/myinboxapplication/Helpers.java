@@ -66,30 +66,52 @@ public class Helpers {
         //"Start": "2015-01-23T20:00:00Z",
         //"End": "2015-01-23T21:00:00Z",
         // Get the local time
-        //Time now = new Time(Time.getCurrentTimezone()); // returns time in current TimeZone
-        Time now = new Time("UTC"); // returns time in UTC
-        now.setToNow();
+        Time localTimeNow = new Time(Time.getCurrentTimezone()); // returns time in current TimeZone
+        localTimeNow.setToNow(); // set it to now
+        localTimeNow.set(localTimeNow.monthDay, localTimeNow.month, localTimeNow.year); // get rid of hours, midnight today
 
-        String startDate = now.format("%Y-%m-%d");
-        String startTime = "00:00:00";
-        String endTime = "23:59:59";
+        long nowLocalTimeMilliseconds = localTimeNow.toMillis(false);
+        int utcOffset = TimeZone.getDefault().getOffset(nowLocalTimeMilliseconds);
+        long nowUtcTimeOffsetMilliseconds = nowLocalTimeMilliseconds - utcOffset;
 
-        Calendar cal = new GregorianCalendar();
-        cal.set(now.year, now.month, now.monthDay);
+        localTimeNow.set(nowUtcTimeOffsetMilliseconds);
+        String startDateTime = localTimeNow.format("%Y-%m-%dT%H:%M:%SZ");
+
+        long eventSpan = 0;
         if (eventTimeSpan == DataTypes.EventTimeSpan.Day) {
-            cal.add(Calendar.DAY_OF_MONTH, 0);
+            eventSpan = Constants.OneHourInMilliseconds * 24;
         } else if (eventTimeSpan == DataTypes.EventTimeSpan.Week) {
-            cal.add(Calendar.DAY_OF_MONTH, 6);
+            eventSpan = Constants.OneHourInMilliseconds * 24 * 7;
         } else {
-            cal.add(Calendar.MONTH, 1);
+            eventSpan = Constants.OneHourInMilliseconds * 24 * 30;
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        sdf.setCalendar(cal);
-        String endDate = sdf.format(cal.getTime());
+        localTimeNow.set(nowUtcTimeOffsetMilliseconds + eventSpan);
+        String endDateTime = localTimeNow.format("%Y-%m-%dT%H:%M:%SZ");
 
-        String s = String.format(queryTemplate, startDate, startTime, endDate, endTime);
+        String queryString = String.format(queryTemplate, startDateTime, endDateTime);
 
-        return s;
+        return queryString;
+    }
+
+    public static boolean IsEventNow(String startTimeUtc, String endTimeUtc) {
+        //RFC3339
+        //"Start": "2015-01-23T20:00:00Z",
+        //"End": "2015-01-23T21:00:00Z",
+        Time startTime = new Time();
+        startTime.parse3339(startTimeUtc);
+
+        Time endTime = new Time();
+        endTime.parse3339(endTimeUtc);
+
+        Time now = new Time();
+        now.setToNow();
+
+        if(startTime.toMillis(true) < now.toMillis(true) &&
+                now.toMillis(true) < endTime.toMillis(true)) {
+            return true;
+        }
+
+        return false;
     }
 }

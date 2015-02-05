@@ -16,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -207,7 +208,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                                 mLoginProgressDialog.dismiss();
                             }
                             SimpleAlertDialog.showAlertDialog(MainActivity.this,
-                                    "Failed to get token", exc.getMessage());
+                                    "Authorization Server returned a failure", exc.getMessage());
                         }
 
                         @Override
@@ -218,17 +219,33 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                                 mLoginProgressDialog.dismiss();
                             }
 
-                            if (result != null && !result.getAccessToken().isEmpty()) {
-                                mCurrentAuthenticationResult = result;
-                                mCurrentUser = mCurrentAuthenticationResult.getUserInfo();
-                                SaveRefreshToken(mCurrentAuthenticationResult.getRefreshToken());
-                                /**
-                                 * Get Events for Today
-                                 */
-                                getAllEvents(true);
-                            } else {
+                            boolean getEvents = false;
+                            try {
+                                if (result != null && !result.getAccessToken().isEmpty()) {
+                                    mCurrentAuthenticationResult = result;
+                                    mCurrentUser = mCurrentAuthenticationResult.getUserInfo();
+                                    SaveRefreshToken(mCurrentAuthenticationResult.getRefreshToken());
+
+                                    getEvents = true;
+
+                                } else {
+                                    SimpleAlertDialog.showAlertDialog(MainActivity.this,
+                                            "Failed to acquire token", "Authorization Server returned success code but no result");
+                                }
+                            }
+                            catch(Exception e)
+                            {
                                 SimpleAlertDialog.showAlertDialog(MainActivity.this,
-                                        "Failed to acquire token", "");
+                                        "Failed to acquire token", "Authorization Server returned success code but no token");
+                                SignOut();
+                            }
+
+                            /**
+                             * Get Events for Today
+                             */
+                            if(getEvents) {
+                                toggleLoginMenuAction(false);
+                                getAllEvents(true);
                             }
                         }
                     });
@@ -240,6 +257,21 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         finally {
             Log.d(TAG, Helpers.LogLeaveMethod("SignOn"));
         }
+    }
+
+    private void toggleLoginMenuAction(boolean showLogin)
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("toggleLoginMenuAction"));
+
+        if(mMenu != null) {
+            MenuItem menuLogin = mMenu.findItem(R.id.action_login);
+            menuLogin.setVisible(showLogin);
+
+            MenuItem menuLogout = mMenu.findItem(R.id.action_logout);
+            menuLogout.setVisible(!showLogin);
+        }
+
+        Log.d(TAG, Helpers.LogLeaveMethod("toggleLoginMenuAction"));
     }
 
     private void SignOut()
@@ -257,6 +289,8 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             mEventsAdapter.clear();
             mEventsAdapter.notifyDataSetChanged();
         }
+
+        toggleLoginMenuAction(true);
 
         Log.d(TAG, Helpers.LogLeaveMethod("SignOut"));
     }
@@ -317,12 +351,6 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 } else {
                     mAppEnvIndex = Constants.IDX_PROD;
                 }
-
-                MenuItem menuLogin = mMenu.findItem(R.id.action_login);
-                menuLogin.setVisible(true);
-
-                MenuItem menuLogout = mMenu.findItem(R.id.action_logout);
-                menuLogout.setVisible(false);
 
                 SignOut();
 
@@ -391,8 +419,6 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         }
         else if (id == R.id.action_logout) {
             item.setVisible(false);
-            MenuItem m = mMenu.findItem(R.id.action_login);
-            m.setVisible(true);
 
             SignOut();
         }
@@ -454,8 +480,20 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
          * Get events and fill the list
          */
         mEventsAdapter = new EventsAdapter(eventsList, getApplicationContext());
-        ListView lView = (ListView) findViewById(R.id.eventItemList);
-        lView.setAdapter(mEventsAdapter);
+        ListView listView = (ListView) findViewById(R.id.eventItemList);
+        listView.setAdapter(mEventsAdapter);
+
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+                Toast.makeText(getApplicationContext(),
+                        "Refresh", Toast.LENGTH_SHORT)
+                        .show();
+                getAllEvents(false);
+            }
+        });
 
         /**
          * Only force a refresh of the current screen,
@@ -589,7 +627,12 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 }
 
                 TextView subject = (TextView) v.findViewById(R.id.subject);
-                subject.setText(e.getSubject());
+                if(Helpers.IsEventNow(e.getStart(), e.getEnd()) && !e.IsAllDay) {
+                    // add a visual cue that the event is now
+                    subject.setText(Constants.VisualCues.EventNow + e.getSubject());
+                } else {
+                    subject.setText(e.getSubject());
+                }
 
                 TextView start = (TextView) v.findViewById(R.id.startend);
                 String localStartTime = startTime.getLocalTimeString();
@@ -702,6 +745,28 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::onPreExecute");
         }
 
+        private String getRestJSONResponse(String urlRestApi, String accessToken) throws Exception {
+
+            HttpURLConnection conn = null;
+            BufferedReader br = null;
+
+            URL url = new URL(urlRestApi);
+            conn = (HttpURLConnection) url.openConnection();
+
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Accept", "application/json; odata.metadata=none");
+            conn.setRequestProperty("User-Agent", "MSOAuthPlayground/1.0");
+            conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+            if (conn.getResponseCode() != 200) {
+                throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+            }
+
+            br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+            String apiOutput = br.readLine();
+
+            return apiOutput;
+        }
+
         @Override
         protected ArrayList<Item> doInBackground(String... params) {
 
@@ -712,19 +777,11 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             try {
                 ArrayList<Item> items = new ArrayList();
 
-                URL url = new URL(params[0]);
-                conn = (HttpURLConnection) url.openConnection();
+                String restAPI = params[0];
+                String accessToken = params[1];
 
-                conn.setRequestMethod("GET");
-                conn.setRequestProperty("Accept", "application/json; odata.metadata=none");
-                conn.setRequestProperty("User-Agent", "MSOAuthPlayground/1.0");
-                conn.setRequestProperty("Authorization", "Bearer " + params[1]);
-                if (conn.getResponseCode() != 200) {
-                    throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
-                }
-
-                br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-                String apiOutput = br.readLine();
+                // get first batch of 50
+                String apiOutput = getRestJSONResponse(restAPI + "&$top=50", accessToken);
                 JSONObject obj = new JSONObject(apiOutput);
                 JSONArray jsonArray = obj.getJSONArray("value");
                 for (int i = 0; i < jsonArray.length(); i++) {
@@ -742,6 +799,26 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                     items.add(event);
                 }
 
+                // get another batch of 50
+                apiOutput = getRestJSONResponse(restAPI + "&$skip=50", accessToken);
+                obj = new JSONObject(apiOutput);
+                jsonArray = obj.getJSONArray("value");
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    obj = jsonArray.getJSONObject(i);
+
+                    EventItem event = new EventItem(obj) ;
+
+                    // Do we need to add a section item?
+                    String eventDay = (new LocalDateTimeConverter(event.getStart())).getLocalDayString();
+                    if(!(eventDay.equals(mLastSectionDate))) {
+                        mLastSectionDate = eventDay; // new Section
+                        items.add(new SectionItem(event.getStart()));
+                    }
+
+                    items.add(event);
+                }
+
+                // done
                 if(items.isEmpty()) {
                     items.add(new EmptyItem());
                 }

@@ -5,8 +5,8 @@
         android:orderInCategory="100" app:showAsAction="never" />
 
     <item android:id="@+id/action_logout" android:title="@string/action_logout"
-        android:orderInCategory="100" app:showAsAction="never" />
+        android:orderInCategory="100" app:showAsAction="never" android:visible="false"/>
 
     <item android:id="@+id/action_login" android:title="@string/action_login"
-        android:orderInCategory="100" app:showAsAction="never" android:visible="false"/>
+        android:orderInCategory="100" app:showAsAction="never" />
 </menu>
