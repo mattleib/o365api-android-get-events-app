@@ -363,14 +363,14 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 Log.d(TAG, Helpers.LogLeaveMethod("onActivityResult"));
                 return;
             }
-            if(preference.getUseCoolColor().getHasChanged()) {
-                getAllEvents(false);
+            if(preference.getDoNotShowPastEvents().getHasChanged()) {
+                getAllEvents(true);
 
                 Log.d(TAG, Helpers.LogLeaveMethod("onActivityResult"));
                 return;
             }
-            if(preference.getDoNotShowPastEvents().getHasChanged()) {
-                getAllEvents(true);
+            if(preference.getUseCoolColor().getHasChanged()) {
+                getAllEvents(false);
 
                 Log.d(TAG, Helpers.LogLeaveMethod("onActivityResult"));
                 return;
@@ -431,8 +431,6 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         }
         else if (id == R.id.action_login) {
             item.setVisible(false);
-            MenuItem m = mMenu.findItem(R.id.action_logout);
-            m.setVisible(true);
 
             SignOn(true);
         }

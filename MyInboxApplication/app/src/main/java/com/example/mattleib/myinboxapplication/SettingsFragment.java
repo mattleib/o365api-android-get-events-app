@@ -83,7 +83,7 @@ public class SettingsFragment extends PreferenceFragment
             mCallback.onColorChanged(newValue);
         } else if (key.equals(Constants.PreferenceKeys.DoNotShowPastEvents)) {
             Boolean newValue = sharedPreferences.getBoolean(key, false);
-            mCallback.onColorChanged(newValue);
+            mCallback.onNoPastEventsChanged(newValue);
         }
     }
 

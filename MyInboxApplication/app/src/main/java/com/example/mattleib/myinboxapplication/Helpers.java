@@ -70,12 +70,14 @@ public class Helpers {
         // Get the local time
         Time localTimeNow = new Time(Time.getCurrentTimezone()); // returns time in current TimeZone
         localTimeNow.setToNow(); // set it to now
+        long nowLocalTimeMilliseconds = localTimeNow.toMillis(false);
 
-        if(!doNotShowPastEvents) { // get rid of hours, midnight today
+        if(!doNotShowPastEvents) { // get rid of hours, midnight today to start with all events of today
             localTimeNow.set(localTimeNow.monthDay, localTimeNow.month, localTimeNow.year);
+        } else { // keep only events starting previous 60 minutes from now
+            localTimeNow.set(nowLocalTimeMilliseconds - (Constants.OneMinuteInMilliseconds * 60));
         }
 
-        long nowLocalTimeMilliseconds = localTimeNow.toMillis(false);
         int utcOffset = TimeZone.getDefault().getOffset(nowLocalTimeMilliseconds);
         long nowUtcTimeOffsetMilliseconds = nowLocalTimeMilliseconds - utcOffset;
 
