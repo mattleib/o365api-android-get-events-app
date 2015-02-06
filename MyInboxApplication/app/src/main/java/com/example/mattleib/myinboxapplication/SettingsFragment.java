@@ -21,6 +21,7 @@ public class SettingsFragment extends PreferenceFragment
         public void onNewTimeSpan(String timeSpan);
         public void onEnvironmentChanged(Boolean usePPE);
         public void onColorChanged(Boolean useCool);
+        public void onNoPastEventsChanged(Boolean doNotShowPastEvents);
     }// end interface
 
     // Instantiate the Interface Callback
@@ -78,6 +79,9 @@ public class SettingsFragment extends PreferenceFragment
             Boolean newValue = sharedPreferences.getBoolean(key, false);
             mCallback.onEnvironmentChanged(newValue);
         } else if (key.equals(Constants.PreferenceKeys.UseCoolColors)) {
+            Boolean newValue = sharedPreferences.getBoolean(key, false);
+            mCallback.onColorChanged(newValue);
+        } else if (key.equals(Constants.PreferenceKeys.DoNotShowPastEvents)) {
             Boolean newValue = sharedPreferences.getBoolean(key, false);
             mCallback.onColorChanged(newValue);
         }

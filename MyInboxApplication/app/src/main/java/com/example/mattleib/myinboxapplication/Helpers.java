@@ -62,13 +62,18 @@ public class Helpers {
         }
     }
 
-    public static String GetEventsQueryString(String queryTemplate, DataTypes.EventTimeSpan eventTimeSpan) {
+    public static String GetEventsQueryString(String queryTemplate,
+                                              DataTypes.EventTimeSpan eventTimeSpan,
+                                              Boolean doNotShowPastEvents) {
         //"Start": "2015-01-23T20:00:00Z",
         //"End": "2015-01-23T21:00:00Z",
         // Get the local time
         Time localTimeNow = new Time(Time.getCurrentTimezone()); // returns time in current TimeZone
         localTimeNow.setToNow(); // set it to now
-        localTimeNow.set(localTimeNow.monthDay, localTimeNow.month, localTimeNow.year); // get rid of hours, midnight today
+
+        if(!doNotShowPastEvents) { // get rid of hours, midnight today
+            localTimeNow.set(localTimeNow.monthDay, localTimeNow.month, localTimeNow.year);
+        }
 
         long nowLocalTimeMilliseconds = localTimeNow.toMillis(false);
         int utcOffset = TimeZone.getDefault().getOffset(nowLocalTimeMilliseconds);

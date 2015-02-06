@@ -29,7 +29,8 @@ public class LocalDateTimeConverter {
         return s;
     }
     public String getLocalTimeString() {
-        String s = mLocalTime.format("%H:%M:%S");
+        //String s = mLocalTime.format("%H:%M:%S");
+        String s = mLocalTime.format("%H:%M");
         return s;
     }
 

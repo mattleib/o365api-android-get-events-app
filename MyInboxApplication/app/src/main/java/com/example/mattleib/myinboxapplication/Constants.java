@@ -38,6 +38,7 @@ public class Constants {
         public static final String UsePPE = "PREF_USEPPE";
         public static final String UseCoolColors = "PREF_USECOOL";
         public static final String RefreshToken = "PREF_REFRESHTOKEN";
+        public static final String DoNotShowPastEvents = "PREF_NOPASTEVENTS";
     }
 
     public static final int PICK_PREFERENCE_REQUEST = 1;

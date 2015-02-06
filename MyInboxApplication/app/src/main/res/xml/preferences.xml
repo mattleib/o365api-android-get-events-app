@@ -11,6 +11,12 @@
             android:entryValues="@array/event_span_values"
             android:defaultValue="@string/preference_eventspan_default" />
         <CheckBoxPreference
+            android:key="PREF_NOPASTEVENTS"
+            android:title="@string/preference_pastevents_title"
+            android:summary="@string/preference_pastevents_summary"
+            android:defaultValue="@string/preference_pastevents_default"
+            />
+        <CheckBoxPreference
             android:key="PREF_USECOOL"
             android:title="@string/preference_color_title"
             android:summary="@string/preference_color_summary"

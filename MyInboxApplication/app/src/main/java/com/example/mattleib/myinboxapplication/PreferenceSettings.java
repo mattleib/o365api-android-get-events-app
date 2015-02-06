@@ -14,6 +14,15 @@ public class PreferenceSettings implements Serializable {
     private PreferenceSetting UsePPE;
     private PreferenceSetting EventTimeSpan;
     private PreferenceSetting UseCoolColor;
+    private PreferenceSetting DoNotShowPastEvents;
+
+    public PreferenceSetting getDoNotShowPastEvents() {
+        return DoNotShowPastEvents;
+    }
+
+    public void setDoNotShowPastEvents(PreferenceSetting doNotShowPastEvents) {
+        DoNotShowPastEvents = doNotShowPastEvents;
+    }
 
     public PreferenceSetting getUseCoolColor() {
         return UseCoolColor;
@@ -39,9 +48,10 @@ public class PreferenceSettings implements Serializable {
         EventTimeSpan = eventTimeSpan;
     }
 
-    public PreferenceSettings(PreferenceSetting eventTimeSpan, PreferenceSetting usePPE, PreferenceSetting useCoolColor) {
+    public PreferenceSettings(PreferenceSetting eventTimeSpan, PreferenceSetting usePPE, PreferenceSetting useCoolColor, PreferenceSetting doNotShowPastEvents) {
         UsePPE = usePPE;
         EventTimeSpan = eventTimeSpan;
         UseCoolColor = useCoolColor;
+        DoNotShowPastEvents = doNotShowPastEvents;
     }
 }

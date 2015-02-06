@@ -365,10 +365,17 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             }
             if(preference.getUseCoolColor().getHasChanged()) {
                 getAllEvents(false);
+
+                Log.d(TAG, Helpers.LogLeaveMethod("onActivityResult"));
+                return;
+            }
+            if(preference.getDoNotShowPastEvents().getHasChanged()) {
+                getAllEvents(true);
+
+                Log.d(TAG, Helpers.LogLeaveMethod("onActivityResult"));
+                return;
             }
         }
-
-        Log.d(TAG, Helpers.LogLeaveMethod("onActivityResult"));
     }
 
     @Override
@@ -489,7 +496,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
                 Toast.makeText(getApplicationContext(),
-                        "Refresh", Toast.LENGTH_SHORT)
+                        "Refresh display", Toast.LENGTH_SHORT)
                         .show();
                 getAllEvents(false);
             }
@@ -511,24 +518,28 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
          */
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String eventSpan = sharedPreferences.getString(Constants.PreferenceKeys.CalendarTimeSpan, "day");
+        Boolean doNotShowPastEvents = sharedPreferences.getBoolean(Constants.PreferenceKeys.DoNotShowPastEvents, false);
         String eventsQuery = "";
 
         if(eventSpan.equals("week")) { /// week
 
             eventsQuery = Helpers.GetEventsQueryString(
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
-                    DataTypes.EventTimeSpan.Week);
+                    DataTypes.EventTimeSpan.Week,
+                    doNotShowPastEvents);
 
         } else if (eventSpan.equals("month")) { /// month
 
             eventsQuery = Helpers.GetEventsQueryString(
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
-                    DataTypes.EventTimeSpan.Month);
+                    DataTypes.EventTimeSpan.Month,
+                    doNotShowPastEvents);
         } else {
 
             eventsQuery = Helpers.GetEventsQueryString(
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
-                    DataTypes.EventTimeSpan.Day);
+                    DataTypes.EventTimeSpan.Day,
+                    doNotShowPastEvents);
         }
 
         /**
@@ -639,14 +650,16 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                 String localEndTime = endTime.getLocalTimeString();
                 String localEndDay = endTime.getLocalDayString();
                 if (e.IsAllDay) {
-                    localEndDay = "All Day Event";
+                    start.setText("All Day Event");
                     if(useCoolColors) {
                         v.setBackgroundColor(getResources().getColor(R.color.Event_AllDay_Cool));
                     } else {
                         v.setBackgroundColor(getResources().getColor(R.color.Event_AllDay_Warm));
                     }
+                } else {
+                    start.setText(localStartTime + " to " + localEndTime + " (" + localEndDay + ")");
                 }
-                start.setText(localStartTime + " to " + localEndTime + " (" + localEndDay + ")");
+
 
                 TextView location = (TextView) v.findViewById(R.id.location);
                 if (e.getLocation() == null) {
@@ -739,7 +752,7 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             Log.d(TAG, Helpers.LogEnterMethod("GetContactsListAsync") + "::onPreExecute");
 
             super.onPreExecute();
-            dialog.setMessage("Downloading events...");
+            dialog.setMessage("Pulling new events from Office 365...");
             dialog.show();
 
             Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::onPreExecute");

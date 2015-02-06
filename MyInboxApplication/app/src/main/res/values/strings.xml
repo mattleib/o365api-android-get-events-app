@@ -12,9 +12,14 @@
     <string name="preference_ppe_title">Run application in PPE mode</string>
     <string name="preference_ppe_summary">Use the Pre-production environment. This is for testing only.</string>
     <string name="preference_ppe_default">false</string>
+
     <string name="preference_eventspan_title">Events timespan</string>
     <string name="preference_eventspan_summary">Select the time interval to retrieve events. A maximum of 100 events will be displayed for any selected interval. Currently set to</string>
     <string name="preference_eventspan_default">week</string>
+
+    <string name="preference_pastevents_title">No past events</string>
+    <string name="preference_pastevents_summary">Never show any events that occurred in the past.</string>
+    <string name="preference_pastevents_default">false</string>
 
     <string name="preference_color_title">Use cool colors</string>
     <string name="preference_color_summary">Change the color palette to use cooler color tones.</string>
