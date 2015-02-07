@@ -78,23 +78,26 @@ public class Helpers {
             localTimeNow.set(nowLocalTimeMilliseconds - (Constants.OneMinuteInMilliseconds * 60));
         }
 
-        int utcOffset = TimeZone.getDefault().getOffset(nowLocalTimeMilliseconds);
-        long nowUtcTimeOffsetMilliseconds = nowLocalTimeMilliseconds - utcOffset;
+        Calendar cal = Calendar.getInstance();
+        cal.set(localTimeNow.year, localTimeNow.month, localTimeNow.monthDay, localTimeNow.hour, localTimeNow.minute, localTimeNow.second);
+        // convert to UTC
+        int zoneOffset = cal.get(java.util.Calendar.ZONE_OFFSET);
+        int dstOffset = cal.get(java.util.Calendar.DST_OFFSET);
+        cal.add(java.util.Calendar.MILLISECOND, -(zoneOffset + dstOffset));
+        Date startDate = cal.getTime();
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        String startDateTime = fmt.format(startDate);
 
-        localTimeNow.set(nowUtcTimeOffsetMilliseconds);
-        String startDateTime = localTimeNow.format("%Y-%m-%dT%H:%M:%SZ");
-
-        long eventSpan = 0;
         if (eventTimeSpan == DataTypes.EventTimeSpan.Day) {
-            eventSpan = Constants.OneHourInMilliseconds * 24;
+            cal.add(Calendar.HOUR, 24);
         } else if (eventTimeSpan == DataTypes.EventTimeSpan.Week) {
-            eventSpan = Constants.OneHourInMilliseconds * 24 * 7;
-        } else {
-            eventSpan = Constants.OneHourInMilliseconds * 24 * 30;
+            cal.add(Calendar.HOUR, 24 * 7);
+        } else { // 30 days
+            cal.add(Calendar.HOUR, 24 * 30);
         }
 
-        localTimeNow.set(nowUtcTimeOffsetMilliseconds + eventSpan);
-        String endDateTime = localTimeNow.format("%Y-%m-%dT%H:%M:%SZ");
+        Date endDate = cal.getTime();
+        String endDateTime = fmt.format(endDate);
 
         String queryString = String.format(queryTemplate, startDateTime, endDateTime);
 
