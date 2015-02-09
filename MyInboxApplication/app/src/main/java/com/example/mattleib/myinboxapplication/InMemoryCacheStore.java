@@ -19,7 +19,7 @@ public class InMemoryCacheStore implements ITokenCacheStore, ITokenStoreQuery {
     private static final long serialVersionUID = 1L;
     private static final String TAG = "InMemoryCacheStore";
     private static Object sLock = new Object();
-    HashMap<String, TokenCacheItem> cache = new HashMap<>();
+    HashMap<String, TokenCacheItem> cache = new HashMap<String, TokenCacheItem>();
 
     private static final InMemoryCacheStore INSTANCE = new InMemoryCacheStore();
 
@@ -62,7 +62,7 @@ public class InMemoryCacheStore implements ITokenCacheStore, ITokenStoreQuery {
 
     @Override
     public void removeAll() {
-        cache = new HashMap<>();
+        cache = new HashMap<String, TokenCacheItem>();
     }
 
     // Extra helper methods can be implemented here for queries
