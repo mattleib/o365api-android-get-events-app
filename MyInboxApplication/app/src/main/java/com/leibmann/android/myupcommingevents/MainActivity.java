@@ -5,10 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -135,6 +137,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar_actionbar);
+        setSupportActionBar(toolbar);
 
         //
         // Read default preferences. Initialize with defaults.
@@ -534,8 +539,15 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                     doNotShowPastEvents);
         }
 
+        // Read event items from cache and display immediately
+        ArrayList<Item> items = EventsCache.Read(getApplicationContext());
+        if(items != null) {
+            mEventsAdapter.setItemList(items);
+            mEventsAdapter.notifyDataSetChanged();
+        }
+
         //
-        // Exec async load task
+        // Exec async load task to get Events from Office 365
         //
         (new GetContactsListAsync()).execute(
                 eventsQuery,
@@ -607,10 +619,18 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             HttpURLConnection conn = null;
             BufferedReader br = null;
             try {
-                ArrayList<Item> items = new ArrayList();
-
                 String restAPI = params[0];
                 String accessToken = params[1];
+
+                // check if there is a data connection
+                ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                Boolean isConnected = cm.getActiveNetworkInfo().isConnected();
+                if(!isConnected) {
+                    Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::NotConnectedtoNetwork");
+                }
+
+                // try to fetch events from Office 365
+                ArrayList<Item> items = new ArrayList();
 
                 // get first batch of 50
                 String apiOutput = getRestJSONResponse(restAPI + "&$top=50", accessToken);
@@ -657,6 +677,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
 
                 // remember the last result ser for refresh
                 mEventsItems = items;
+
+                // write event items to cache
+                EventsCache.Write(items, getApplicationContext());
 
                 Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::doInBackground");
                 return items;

@@ -7,6 +7,8 @@ import java.io.Serializable;
  */
 public class EmptyItem implements Serializable, Item {
 
+    private static final long serialVersionUID = 0L;
+
     public DataTypes.ItemType isItemType() {
         return DataTypes.ItemType.empty;
     }

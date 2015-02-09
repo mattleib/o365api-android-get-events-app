@@ -25,4 +25,9 @@
     <color name="Event_OnMyOwn_Warm">#ffd8e8b0</color>
     <color name="Event_Separator_Warm">#ff80213a</color>
 
+    <color name="primary">#ffcc00</color>
+    <color name="primary_dark">#d4aa00</color>
+    <color name="accent">#00ccff</color>
+    <color name="text">#000000</color>
+
 </resources>

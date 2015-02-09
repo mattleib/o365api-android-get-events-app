@@ -1,7 +1,16 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/container"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:windowBackground="@color/MyYellow"
-    android:colorBackground="@color/MyYellow"
-/>
+    android:layout_height="match_parent">
+    <include layout="@layout/toolbar_actionbar"/>
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+    <!--
+android:windowBackground="@color/MyWhite"
+android:colorBackground="@color/MyWhite"
+    -->
+</LinearLayout>
