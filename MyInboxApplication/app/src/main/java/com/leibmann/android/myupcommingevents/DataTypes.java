@@ -1,4 +1,4 @@
-package com.example.mattleib.myinboxapplication;
+package com.leibmann.android.myupcommingevents;
 
 /**
  * Created by mattleib on 1/30/2015.

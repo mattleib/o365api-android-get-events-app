@@ -1,9 +1,9 @@
-package com.example.mattleib.myinboxapplication;
+package com.leibmann.android.myupcommingevents;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.app.Activity;
 import android.preference.PreferenceManager;
 
 

@@ -1,13 +1,13 @@
-package com.example.mattleib.myinboxapplication;
+package com.leibmann.android.myupcommingevents;
 
 /**
  * Created by mattleib on 1/23/2015.
  */
 public class Constants {
 
-    /**
-     * Production Values
-     */
+    //
+    // Production Values
+    //
     public static final String AAD_Client_ID ="af9ef21e-b71b-4b01-9eb6-1d16a8c9ed22";
     //public static String AAD_RedirectUri = "app://com.example.mattleib.myinboxapplication";
     public static final String AAD_RedirectUri = "https://myinboxapplication";
@@ -19,9 +19,9 @@ public class Constants {
     //public static final String O365_EventsQueryTemplate = "https://outlook.office365.com/api/v1.0/me/calendarview?startdatetime=%s&enddatetime=%s&$top=50&$orderby=Start";
     //public static final String O365_EventsQueryTemplate = "https://outlook.office365.com/api/v1.0/me/calendarview?startdatetime=%sT%sZ&enddatetime=%sT%sZ&$top=50&$orderby=Start";
 
-    /**
-     * PPE Values
-     */
+    //
+    // PPE Values
+    //
     public static final String PPE_AAD_Client_ID ="658a894e-1b57-40da-a350-061462eb5b77";
     public static final String PPE_AAD_RedirectUri = "https://myinboxapplication";
     public static final String PPE_AAD_Authority = "https://login.windows-ppe.net/common";

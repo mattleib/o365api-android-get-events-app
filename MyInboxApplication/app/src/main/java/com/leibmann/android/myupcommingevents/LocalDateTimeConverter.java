@@ -1,4 +1,4 @@
-package com.example.mattleib.myinboxapplication;
+package com.leibmann.android.myupcommingevents;
 
 import android.text.format.Time;
 
@@ -14,9 +14,9 @@ public class LocalDateTimeConverter {
     private Time mLocalTime;
 
     public LocalDateTimeConverter(String utcDateRFC3339) {
-        //RFC3339
-        //"Start": "2015-01-23T20:00:00Z",
-        //"End": "2015-01-23T21:00:00Z",
+        // RFC3339
+        // "Start": "2015-01-23T20:00:00Z",
+        // "End": "2015-01-23T21:00:00Z",
         Time localTime = new Time();
         localTime.parse3339(utcDateRFC3339);
         int utcOffset = TimeZone.getDefault().getOffset(localTime.toMillis(false));
@@ -49,7 +49,6 @@ public class LocalDateTimeConverter {
         SimpleDateFormat sdf = new SimpleDateFormat("EEEE");
         Date d = new Date();
         d.setTime(mLocalTime.toMillis(false));
-        // String dayOfTheWeek = android.text.format.DateFormat.format("EEEE", d);
         String dayOfTheWeek = sdf.format(d);
         return dayOfTheWeek;
     }

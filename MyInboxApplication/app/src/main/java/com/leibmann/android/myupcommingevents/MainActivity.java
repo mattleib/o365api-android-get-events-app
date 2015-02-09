@@ -1,4 +1,4 @@
-package com.example.mattleib.myinboxapplication;
+package com.leibmann.android.myupcommingevents;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -36,41 +36,40 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity implements com.example.mattleib.myinboxapplication.EventItemsFragment.EventRefresh {
+public class MainActivity extends ActionBarActivity implements EventItemsFragment.EventRefresh {
 
-    /**
-     * Name of the Module for Logcat display's etc.
-     */
+    //
+    // Name of the Module for Logcat display's etc.
+    //
     private static String TAG = "MainActivity";
 
-    /**
-     * ADAL authentication context and result for app
-     */
+    //
+    // ADAL authentication context and result for app
+    ///
     private static AuthenticationContext mAuthContext = null;
     private static AuthenticationResult mCurrentAuthenticationResult = null;
     private static UserInfo mCurrentUser = null;
 
-    /**
-     * Adapter to fill the events list
-     */
+    //
+    // Adapter to fill the events list
+    //
     private static EventsAdapter mEventsAdapter = null;
 
-    /**
-     * In memory holding of event items
-     */
+    //
+    // In memory holding of event items
+    //
     private static ArrayList<Item> mEventsItems = null;
 
-    /**
-     * The activities menu
-     */
+    //
+    // The activities menu
+    //
     private static Menu mMenu = null;
 
-    /**
-     * Configuration for Runtime: PPE and PROD
-     */
+    //
+    // Configuration for Runtime: PPE and PROD
+    ///
     private final static AppConfig[] mAppEnvironment = {
             new AppConfig(
                     Constants.AAD_Authority,
@@ -92,9 +91,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
     private static int mAppEnvIndex = Constants.IDX_PROD;
 
 
-    /**
-     * Set the current environment the app operates on
-     */
+    //
+    // Set the current environment the app operates on
+    //
     private void GetCurrentAppEnvironmentSettings()
     {
         Log.d(TAG, Helpers.LogEnterMethod("GetCurrentAppEnvironmentSettings"));
@@ -141,9 +140,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        /**
-         * Read default preferences. Initialize with defaults.
-         */
+        //
+        // Read default preferences. Initialize with defaults.
+        //
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         if (savedInstanceState == null) {
@@ -157,9 +156,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                     .commit();
         }
 
-        /**
-         * Login, Get AccessToken, and Pre-fill the EventList
-         */
+        //
+        // Login, Get AccessToken, and Pre-fill the EventList
+        //
         SignOn(true);
 
         Toast.makeText(getApplicationContext(), "Welcome. Let's get busy!", Toast.LENGTH_SHORT).show();
@@ -171,9 +170,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
     {
         Log.d(TAG, Helpers.LogEnterMethod("SignOn"));
 
-        /**
-         * Read the current environment the app operates on
-         */
+        //
+        // Read the current environment the app operates on
+        //
         GetCurrentAppEnvironmentSettings();
 
         final ProgressDialog mLoginProgressDialog = new ProgressDialog(this);
@@ -240,9 +239,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                                 SignOut();
                             }
 
-                            /**
-                             * Get Events for Today
-                             */
+                            //
+                            // Get Events for Today
+                            //
                             if(getEvents) {
                                 toggleLoginMenuAction(false);
                                 getAllEvents(true);
@@ -441,9 +440,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
     }
 
 
-    /**
-     * The interface for fragment to notify to Refresh events
-     */
+    //
+    // The interface for fragment to notify to Refresh events
+    //
     public void onRefreshEvents()
     {
         Log.d(TAG, Helpers.LogEnterMethod("onRefreshEvents"));
@@ -453,9 +452,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         Log.d(TAG, Helpers.LogLeaveMethod("onRefreshEvents"));
     }
 
-    /**
-     * Get the events and Re-Fill the list
-     */
+    //
+    // Get the events and Re-Fill the list
+    //
     private void getAllEvents(boolean requery)
     {
         Log.d(TAG, Helpers.LogEnterMethod("getAllEvents"));
@@ -481,9 +480,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             requery = true;
         }
 
-        /**
-         * Get events and fill the list
-         */
+        //
+        // Get events and fill the list
+        //
         mEventsAdapter = new EventsAdapter(eventsList, getApplicationContext());
         ListView listView = (ListView) findViewById(R.id.eventItemList);
         listView.setAdapter(mEventsAdapter);
@@ -500,10 +499,10 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             }
         });
 
-        /**
-         * Only force a refresh of the current screen,
-         * but don't request new events from Office 365
-         */
+        //
+        // Only force a refresh of the current screen,
+        // but don't request new events from Office 365
+        //
         if(!requery) {
             mEventsAdapter.notifyDataSetChanged();
 
@@ -511,9 +510,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
             return;
         }
 
-        /**
-         * Get the preference and build the query to receive events from Office 365 APIs
-         */
+        //
+        // Get the preference and build the query to receive events from Office 365 APIs
+        //
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String eventSpan = sharedPreferences.getString(Constants.PreferenceKeys.CalendarTimeSpan, "day");
         Boolean doNotShowPastEvents = sharedPreferences.getBoolean(Constants.PreferenceKeys.DoNotShowPastEvents, false);
@@ -540,9 +539,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
                     doNotShowPastEvents);
         }
 
-        /**
-         * Exec async load task
-         */
+        //
+        // Exec async load task
+        //
         (new GetContactsListAsync()).execute(
                 eventsQuery,
                 mCurrentAuthenticationResult.getAccessToken()
@@ -551,9 +550,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         Log.d(TAG, Helpers.LogLeaveMethod("getAllEvents") + "::Background refresh of events submitted");
     }
 
-    /**
-     * Adapter to get Events
-     */
+    //
+    // Adapter to get Events
+    //
     public class EventsAdapter extends ArrayAdapter<Item>
     {
         private ArrayList<Item> itemList;
@@ -724,9 +723,9 @@ public class MainActivity extends ActionBarActivity implements com.example.mattl
         }
     }
 
-    /**
-     * Load Events in Background
-     */
+    //
+    // Load Events in Background
+    //
     public class GetContactsListAsync extends AsyncTask<String, Void, ArrayList<Item>> {
 
         private final ProgressDialog dialog = new ProgressDialog(MainActivity.this);

@@ -1,10 +1,9 @@
-package com.example.mattleib.myinboxapplication;
+package com.leibmann.android.myupcommingevents;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * Created by mattleib on 1/26/2015.
@@ -20,8 +19,8 @@ public class EventItem implements Serializable, Item {
     protected String Start;
     protected String End;
     protected String Type;
-    protected Organizer Organizer;
-    protected Location Location;
+    protected com.leibmann.android.myupcommingevents.Organizer Organizer;
+    protected com.leibmann.android.myupcommingevents.Location Location;
     protected Boolean IsAllDay;
     protected Boolean IsCancelled;
     protected String Importance;
@@ -67,19 +66,19 @@ public class EventItem implements Serializable, Item {
         Type = type;
     }
 
-    public Organizer getOrganizer() {
+    public com.leibmann.android.myupcommingevents.Organizer getOrganizer() {
         return Organizer;
     }
 
-    public void setOrganizer(Organizer organizer) {
+    public void setOrganizer(com.leibmann.android.myupcommingevents.Organizer organizer) {
         Organizer = organizer;
     }
 
-    public Location getLocation() {
+    public com.leibmann.android.myupcommingevents.Location getLocation() {
         return Location;
     }
 
-    public void setLocation(Location location) {
+    public void setLocation(com.leibmann.android.myupcommingevents.Location location) {
         Location = location;
     }
 
@@ -115,7 +114,7 @@ public class EventItem implements Serializable, Item {
         ShowAs = showAs;
     }
 
-    public EventItem(String subject, String bodyPreview, String start, String end, String type, com.example.mattleib.myinboxapplication.Organizer organizer, com.example.mattleib.myinboxapplication.Location location, Boolean isAllDay, Boolean isCancelled, String importance, String showAs) {
+    public EventItem(String subject, String bodyPreview, String start, String end, String type, com.leibmann.android.myupcommingevents.Organizer organizer, com.leibmann.android.myupcommingevents.Location location, Boolean isAllDay, Boolean isCancelled, String importance, String showAs) {
         Subject = subject;
         BodyPreview = bodyPreview;
         Start = start;
@@ -144,7 +143,7 @@ public class EventItem implements Serializable, Item {
         if(objLocation == null){
             Location = null;
         } else {
-            Location = new Location(Helpers.TryGetJSONValue(objLocation, "DisplayName"));
+            Location = new com.leibmann.android.myupcommingevents.Location(Helpers.TryGetJSONValue(objLocation, "DisplayName"));
         }
 
         JSONObject objOrganizer = Helpers.TryGetJSONObject(event, "Organizer");
@@ -156,7 +155,7 @@ public class EventItem implements Serializable, Item {
                     Helpers.TryGetJSONValue(objEmailAddress, "Address"),
                     Helpers.TryGetJSONValue(objEmailAddress, "Name")
             );
-            Organizer = new Organizer(email);
+            Organizer = new com.leibmann.android.myupcommingevents.Organizer(email);
         }
     }
 }

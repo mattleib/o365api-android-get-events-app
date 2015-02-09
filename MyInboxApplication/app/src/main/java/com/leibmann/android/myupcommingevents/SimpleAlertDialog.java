@@ -1,4 +1,4 @@
-package com.example.mattleib.myinboxapplication;
+package com.leibmann.android.myupcommingevents;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -8,9 +8,9 @@ import android.content.DialogInterface;
  * Created by mattleib on 1/27/2015.
  */
 public class SimpleAlertDialog {
-    /**
-     * show simple Alert Dialog
-     * */
+    //
+    // show simple Alert Dialog
+    ///
     public static void showAlertDialog(Context context, String title, String message) {
         AlertDialog.Builder dialog = new AlertDialog.Builder(context);
         dialog.setTitle(title)

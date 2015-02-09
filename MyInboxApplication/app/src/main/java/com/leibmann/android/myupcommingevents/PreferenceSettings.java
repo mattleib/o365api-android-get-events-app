@@ -1,6 +1,4 @@
-package com.example.mattleib.myinboxapplication;
-
-import android.os.Parcelable;
+package com.leibmann.android.myupcommingevents;
 
 import java.io.Serializable;
 

@@ -1,17 +1,13 @@
-package com.example.mattleib.myinboxapplication;
+package com.leibmann.android.myupcommingevents;
 
-import android.content.SharedPreferences;
 import android.text.format.Time;
 import android.util.Log;
 
 import org.json.JSONObject;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
 
 /**
  * Created by mattleib on 1/28/2015.
@@ -65,8 +61,8 @@ public class Helpers {
     public static String GetEventsQueryString(String queryTemplate,
                                               DataTypes.EventTimeSpan eventTimeSpan,
                                               Boolean doNotShowPastEvents) {
-        //"Start": "2015-01-23T20:00:00Z",
-        //"End": "2015-01-23T21:00:00Z",
+        // "Start": "2015-01-23T20:00:00Z",
+        // "End": "2015-01-23T21:00:00Z",
         // Get the local time
         Time localTimeNow = new Time(Time.getCurrentTimezone()); // returns time in current TimeZone
         localTimeNow.setToNow(); // set it to now
@@ -81,9 +77,9 @@ public class Helpers {
         Calendar cal = Calendar.getInstance();
         cal.set(localTimeNow.year, localTimeNow.month, localTimeNow.monthDay, localTimeNow.hour, localTimeNow.minute, localTimeNow.second);
         // convert to UTC
-        int zoneOffset = cal.get(java.util.Calendar.ZONE_OFFSET);
-        int dstOffset = cal.get(java.util.Calendar.DST_OFFSET);
-        cal.add(java.util.Calendar.MILLISECOND, -(zoneOffset + dstOffset));
+        int zoneOffset = cal.get(Calendar.ZONE_OFFSET);
+        int dstOffset = cal.get(Calendar.DST_OFFSET);
+        cal.add(Calendar.MILLISECOND, -(zoneOffset + dstOffset));
         Date startDate = cal.getTime();
         SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String startDateTime = fmt.format(startDate);

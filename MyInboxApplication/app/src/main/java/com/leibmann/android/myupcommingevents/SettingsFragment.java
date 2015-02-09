@@ -1,23 +1,20 @@
-package com.example.mattleib.myinboxapplication;
+package com.leibmann.android.myupcommingevents;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+
 
 public class SettingsFragment extends PreferenceFragment
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    /**
-     * Interface to signal timespan of the preferences have changed
-     */
-    public interface EventTimespanChanged{
+    //
+    // Interface to signal timespan of the preferences have changed
+    //
+    public interface EventTimespanChanged {
         public void onNewTimeSpan(String timeSpan);
         public void onEnvironmentChanged(Boolean usePPE);
         public void onColorChanged(Boolean useCool);

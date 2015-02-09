@@ -1,3 +1,5 @@
+package com.leibmann.android.myupcommingevents
+
 mavenCentral()
 flatDir {
     dirs 'libs'
