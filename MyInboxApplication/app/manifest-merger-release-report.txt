@@ -35,7 +35,7 @@ MERGED from com.android.support:support-v4:21.0.3:16:5
 		ADDED from AndroidManifest.xml:10:9
 	android:theme
 		ADDED from AndroidManifest.xml:12:9
-activity#com.example.mattleib.myinboxapplication.MainActivity
+activity#com.leibmann.android.myupcommingevents.MainActivity
 ADDED from AndroidManifest.xml:13:9
 	android:label
 		ADDED from AndroidManifest.xml:16:13
@@ -53,7 +53,7 @@ category#android.intent.category.LAUNCHER
 ADDED from AndroidManifest.xml:20:17
 	android:name
 		ADDED from AndroidManifest.xml:20:27
-activity#com.example.mattleib.myinboxapplication.SettingsActivity
+activity#com.leibmann.android.myupcommingevents.SettingsActivity
 ADDED from AndroidManifest.xml:23:9
 	android:label
 		ADDED from AndroidManifest.xml:25:13

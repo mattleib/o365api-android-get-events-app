@@ -452,6 +452,12 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogLeaveMethod("onRefreshEvents"));
     }
 
+    public EventsAdapter getEventsAdapter()
+    {
+        return mEventsAdapter;
+    }
+
+
     //
     // Get the events and Re-Fill the list
     //
@@ -589,35 +595,11 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::onPreExecute");
         }
 
-        private String getRestJSONResponse(String urlRestApi, String accessToken) throws Exception {
-
-            HttpURLConnection conn = null;
-            BufferedReader br = null;
-
-            URL url = new URL(urlRestApi);
-            conn = (HttpURLConnection) url.openConnection();
-
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Accept", "application/json; odata.metadata=none");
-            conn.setRequestProperty("User-Agent", "MSOAuthPlayground/1.0");
-            conn.setRequestProperty("Authorization", "Bearer " + accessToken);
-            if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
-            }
-
-            br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-            String apiOutput = br.readLine();
-
-            return apiOutput;
-        }
-
         @Override
         protected ArrayList<Item> doInBackground(String... params) {
 
             Log.d(TAG, Helpers.LogEnterMethod("GetContactsListAsync") + "::doInBackground");
 
-            HttpURLConnection conn = null;
-            BufferedReader br = null;
             try {
                 String restAPI = params[0];
                 String accessToken = params[1];
@@ -633,7 +615,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                 ArrayList<Item> items = new ArrayList();
 
                 // get first batch of 50
-                String apiOutput = getRestJSONResponse(restAPI + "&$top=50", accessToken);
+                String apiOutput = Office365API.getRequestForJSONResponse(restAPI + "&$top=50", accessToken);
                 JSONObject obj = new JSONObject(apiOutput);
                 JSONArray jsonArray = obj.getJSONArray("value");
                 for (int i = 0; i < jsonArray.length(); i++) {
@@ -652,7 +634,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                 }
 
                 // get another batch of 50
-                apiOutput = getRestJSONResponse(restAPI + "&$skip=50", accessToken);
+                apiOutput = Office365API.getRequestForJSONResponse(restAPI + "&$skip=50", accessToken);
                 obj = new JSONObject(apiOutput);
                 jsonArray = obj.getJSONArray("value");
                 for (int i = 0; i < jsonArray.length(); i++) {
@@ -697,11 +679,6 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                 Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::doInBackground");
                 return items;
 
-            } finally {
-                AppHelper.close(br);
-                if (conn != null) {
-                    conn.disconnect();
-                }
             }
         }
     }

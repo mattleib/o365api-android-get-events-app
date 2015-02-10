@@ -5,10 +5,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 
@@ -17,10 +21,55 @@ import android.widget.ListView;
  */
 public class EventItemsFragment extends Fragment {
 
+    private int mSelectedItemPosition = Constants.NO_ITEM_SELECTED;
+
+    private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
+
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            return false;
+        }
+
+        public void onDestroyActionMode(ActionMode mode) {
+            mSelectedItemPosition = Constants.NO_ITEM_SELECTED;
+            mode = null;
+        }
+
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            mode.setTitle("Inform Organizer");
+            mode.getMenuInflater().inflate(R.menu.contextual_list_actions, menu);
+            return true;
+        }
+
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            int id = item.getItemId();
+            EventsAdapter adapter = (EventsAdapter) mCallback.getEventsAdapter();
+            if(adapter == null) {
+                return false;
+            }
+
+            EventItem e = (EventItem)adapter.getItem(mSelectedItemPosition);
+            switch (id) {
+                case R.id.ctx_action_cannot_make_it: {
+                    mode.finish();
+                    break;
+                }
+                case R.id.ctx_action_running_late: {
+                    mode.finish();
+                    break;
+                }
+                default:
+                    return false;
+            }
+            return true;
+        }
+    };
+
     public interface EventRefresh{
         // Interface method you will call from this fragment
         public void onRefreshEvents();
+        public EventsAdapter getEventsAdapter();
     }// end interface
+
 
     // Instantiate the new Interface Callback
     private EventRefresh mCallback = null;
@@ -63,15 +112,34 @@ public class EventItemsFragment extends Fragment {
         lView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView absListView, int i) {
-
             }
 
             @Override
             public void onScroll(AbsListView absListView, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (firstVisibleItem == 0)
+                if (firstVisibleItem == 0) {
                     swipeView.setEnabled(true);
-                else
+                } else {
                     swipeView.setEnabled(false);
+                }
+            }
+        });
+
+        lView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            public boolean onItemLongClick (AdapterView parent, View view, int position, long id) {
+                EventsAdapter adapter = (EventsAdapter) mCallback.getEventsAdapter();
+                if(adapter == null) {
+                    return false;
+                }
+
+                Item e = adapter.getItem(position);
+                if(e == null || e.isItemType() != DataTypes.ItemType.event) {
+                    return false;
+                }
+
+                getActivity().startActionMode(mActionModeCallback);
+                mSelectedItemPosition = position;
+                view.setSelected(true);
+                return true;
             }
         });
 
