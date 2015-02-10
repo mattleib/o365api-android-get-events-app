@@ -10,6 +10,7 @@ public class AppConfig {
     private String ResourceExchange;
     private String UserHint;
     private String EventsQueryTemplate;
+    private String SendEmailUri;
 
     public String getAuthority() {
         return Authority;
@@ -17,6 +18,14 @@ public class AppConfig {
 
     public void setAuthority(String authority) {
         Authority = authority;
+    }
+
+    public String getSendEmailUri() {
+        return SendEmailUri;
+    }
+
+    public void setSendEmailUri(String sendEmailUri) {
+        SendEmailUri = sendEmailUri;
     }
 
     public String getClientId() {
@@ -59,12 +68,13 @@ public class AppConfig {
         EventsQueryTemplate = eventsQueryTemplate;
     }
 
-    public AppConfig(String authority, String clientId, String redirectUri, String resourceExchange, String userHint, String eventsQueryTemplate) {
+    public AppConfig(String authority, String clientId, String redirectUri, String resourceExchange, String userHint, String eventsQueryTemplate, String sendEmailUri) {
         Authority = authority;
         ClientId = clientId;
         RedirectUri = redirectUri;
         ResourceExchange = resourceExchange;
         UserHint = userHint;
         EventsQueryTemplate = eventsQueryTemplate;
+        SendEmailUri = sendEmailUri;
     }
 }

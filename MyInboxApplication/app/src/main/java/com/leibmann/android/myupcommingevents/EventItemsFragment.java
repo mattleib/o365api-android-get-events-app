@@ -41,19 +41,17 @@ public class EventItemsFragment extends Fragment {
         }
 
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            int id = item.getItemId();
-            EventsAdapter adapter = (EventsAdapter) mCallback.getEventsAdapter();
-            if(adapter == null) {
-                return false;
-            }
 
-            EventItem e = (EventItem)adapter.getItem(mSelectedItemPosition);
+            EventItem eventItem = (EventItem) mCallback.getCurrentSelectedItem(mSelectedItemPosition);
+            int id = item.getItemId();
             switch (id) {
                 case R.id.ctx_action_cannot_make_it: {
+                    mCallback.sendEmail(eventItem, DataTypes.EmailInformType.CannotMakeIt);
                     mode.finish();
                     break;
                 }
                 case R.id.ctx_action_running_late: {
+                    mCallback.sendEmail(eventItem, DataTypes.EmailInformType.RunningLate);
                     mode.finish();
                     break;
                 }
@@ -67,7 +65,8 @@ public class EventItemsFragment extends Fragment {
     public interface EventRefresh{
         // Interface method you will call from this fragment
         public void onRefreshEvents();
-        public EventsAdapter getEventsAdapter();
+        public Item getCurrentSelectedItem(int position);
+        public void sendEmail(EventItem eventItem, DataTypes.EmailInformType emailType);
     }// end interface
 
 
@@ -126,12 +125,7 @@ public class EventItemsFragment extends Fragment {
 
         lView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             public boolean onItemLongClick (AdapterView parent, View view, int position, long id) {
-                EventsAdapter adapter = (EventsAdapter) mCallback.getEventsAdapter();
-                if(adapter == null) {
-                    return false;
-                }
-
-                Item e = adapter.getItem(position);
+                Item e = mCallback.getCurrentSelectedItem(position);
                 if(e == null || e.isItemType() != DataTypes.ItemType.event) {
                     return false;
                 }

@@ -28,11 +28,6 @@ import com.microsoft.aad.adal.UserInfo;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 
@@ -75,7 +70,8 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                     Constants.AAD_RedirectUri,
                     Constants.O365_ExchangeOnline,
                     Constants.O365_UserHint,
-                    Constants.O365_EventsQueryTemplate
+                    Constants.O365_EventsQueryTemplate,
+                    Constants.O365_SendEmailUri
             ),
             new AppConfig(
                     Constants.PPE_AAD_Authority,
@@ -83,7 +79,8 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                     Constants.PPE_AAD_RedirectUri,
                     Constants.PPE_O365_ExchangeOnline,
                     Constants.PPE_O365_UserHint,
-                    Constants.PPE_O365_EventsQueryTemplate
+                    Constants.PPE_O365_EventsQueryTemplate,
+                    Constants.PPE_O365_SendEmailUri
             )
     };
     private static int mAppEnvIndex = Constants.IDX_PROD;
@@ -452,9 +449,63 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogLeaveMethod("onRefreshEvents"));
     }
 
-    public EventsAdapter getEventsAdapter()
+    public Item getCurrentSelectedItem(int position)
     {
-        return mEventsAdapter;
+        if(mEventsAdapter == null)
+            return null;
+
+        Item e = mEventsAdapter.getItem(position);
+        if(e == null) {
+            return null;
+        }
+
+        return e;
+    }
+
+    public void sendEmail(EventItem eventItem, DataTypes.EmailInformType emailType)
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("sendEmail"));
+
+        if(!RefreshToken()) {
+            Log.d(TAG, Helpers.LogInMethod("sendEmail") + "::No New AccessToken. Re-signon");
+            SignOn(false);
+
+            Log.d(TAG, Helpers.LogLeaveMethod("sendEmail"));
+            return;
+        }
+
+        if(eventItem.getOrganizer() == null) // nothing todo
+            return;
+
+        LocalDateTimeConverter startTime = new LocalDateTimeConverter(eventItem.getStart());
+
+        String subject = "";
+        String body = "";
+        if(emailType == DataTypes.EmailInformType.RunningLate) {
+            subject = "Running Late for: ";
+            body = "Sorry, I am running late for ";
+        } else {
+            subject = "I can't make the meeting: ";
+            body = "Sorry, I can't make the meeting ";
+        }
+        subject = subject + eventItem.getSubject();
+        body = body + " at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ".";
+
+        try {
+            Office365API.sendEmail(
+                    mAppEnvironment[mAppEnvIndex].getSendEmailUri(),
+                    subject,
+                    body,
+                    eventItem.getOrganizer().getEmailAddress().getName(),
+                    eventItem.getOrganizer().getEmailAddress().getAddress(),
+                    mCurrentAuthenticationResult.getAccessToken()
+            );
+        }
+        catch(Exception e) {
+            Log.d(TAG, Helpers.LogInMethod("sendEmail") + "::Exception", e);
+        }
+
+        Log.d(TAG, Helpers.LogLeaveMethod("sendEmail"));
     }
 
 

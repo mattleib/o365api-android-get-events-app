@@ -16,4 +16,9 @@ public class DataTypes {
         section,
         empty
     }
+
+    public enum EmailInformType {
+        RunningLate,
+        CannotMakeIt
+    }
 }
