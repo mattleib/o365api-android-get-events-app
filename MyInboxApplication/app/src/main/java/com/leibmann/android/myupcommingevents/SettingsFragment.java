@@ -59,7 +59,7 @@ public class SettingsFragment extends PreferenceFragment
     {
         Preference preference = findPreference(Constants.PreferenceKeys.CalendarTimeSpan);
         if(eventSpan.equals("today")) {
-            preference.setSummary(mEventsSpanSummary + " today.");
+            preference.setSummary(mEventsSpanSummary + " next 24 hours.");
         } else if (eventSpan.equals("next7days")) {
             preference.setSummary(mEventsSpanSummary + " next seven days.");
         } else {

@@ -11,7 +11,7 @@ public class Constants {
     public static final String AAD_Client_ID ="af9ef21e-b71b-4b01-9eb6-1d16a8c9ed22";
     //public static String AAD_RedirectUri = "app://com.example.mattleib.myinboxapplication";
     public static final String AAD_RedirectUri = "https://myinboxapplication";
-    public static final String AAD_Authority = "https://login.windows.net/common";
+    public static final String AAD_Authority = "https://login.windows.net/";
     public static final String O365_ExchangeOnline = "https://outlook.office365.com/";
     public static final String O365_UserHint = "";
     //public static final String O365_UserHint = "garthf@oauthplay.onmicrosoft.com";
@@ -25,7 +25,7 @@ public class Constants {
     //
     public static final String PPE_AAD_Client_ID ="658a894e-1b57-40da-a350-061462eb5b77";
     public static final String PPE_AAD_RedirectUri = "https://myinboxapplication";
-    public static final String PPE_AAD_Authority = "https://login.windows-ppe.net/common";
+    public static final String PPE_AAD_Authority = "https://login.windows-ppe.net/";
     public static final String PPE_O365_ExchangeOnline = "https://sdfpilot.outlook.com/";
     public static final String PPE_O365_UserHint = "";
     //public static final String PPE_O365_UserHint = "mattleib@ntdev.microsoft.com";
@@ -42,8 +42,13 @@ public class Constants {
         public static final String UsePPE = "PREF_USEPPE";
         public static final String UseCoolColors = "PREF_USECOOL";
         public static final String RefreshToken = "PREF_REFRESHTOKEN";
+        public static final String UserTenant = "PREF_AUTHTENANT";
         public static final String DoNotShowPastEvents = "PREF_NOPASTEVENTS";
     }
+
+    public static final String PREFS_NAME = "MyPrefsFile";
+
+    public static final String UserTenantDefault = "common";
 
     public static final int PICK_PREFERENCE_REQUEST = 1;
     public static final int IDX_PROD = 0;

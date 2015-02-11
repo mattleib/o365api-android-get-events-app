@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="event_span_entries">
-        <item>Today</item>
+        <item>Next 24 hours</item>
         <item>Next 7 days</item>
         <item>Next 30 days</item>
     </string-array>

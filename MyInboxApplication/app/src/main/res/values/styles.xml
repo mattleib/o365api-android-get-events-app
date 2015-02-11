@@ -9,7 +9,7 @@
     <style
         name="ActionBar.TitleText"
         parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
-        <item name="android:textColor">@color/MyBlack</item>
+        <item name="android:textColor">@color/text</item>
         <item name="android:textSize">18sp</item>
     </style>
 

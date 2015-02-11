@@ -85,6 +85,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             )
     };
     private static int mAppEnvIndex = Constants.IDX_PROD;
+    private static String mAuthority = ""; // remember the authority for this session
 
 
     //
@@ -105,12 +106,35 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogLeaveMethod("GetCurrentAppEnvironmentSettings"));
     }
 
+    public void SaveUserTenant(String tenantId)
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("SaveUserTenant"));
+
+        SharedPreferences appPreferences = getSharedPreferences(Constants.PREFS_NAME, 0);
+        SharedPreferences.Editor editor = appPreferences.edit();
+        editor.putString(Constants.PreferenceKeys.UserTenant, tenantId);
+        editor.commit();
+
+        Log.d(TAG, Helpers.LogLeaveMethod("SaveUserTenant"));
+    }
+
+    public String GetUserTenant()
+    {
+        Log.d(TAG, Helpers.LogEnterMethod("GetUserTenant"));
+
+        SharedPreferences appPreferences = getSharedPreferences(Constants.PREFS_NAME, 0);
+        String userTenant = appPreferences.getString(Constants.PreferenceKeys.UserTenant, Constants.UserTenantDefault);
+
+        Log.d(TAG, Helpers.LogLeaveMethod("GetUserTenant"));
+        return userTenant;
+    }
+
     public void SaveRefreshToken(String refreshToken)
     {
         Log.d(TAG, Helpers.LogEnterMethod("SaveRefreshToken"));
 
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPref.edit();
+        SharedPreferences appPreferences = getSharedPreferences(Constants.PREFS_NAME, 0);
+        SharedPreferences.Editor editor = appPreferences.edit();
         editor.putString(Constants.PreferenceKeys.RefreshToken, refreshToken);
         editor.commit();
 
@@ -121,8 +145,8 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     {
         Log.d(TAG, Helpers.LogEnterMethod("GetRefreshToken"));
 
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        String refreshToken = sharedPref.getString(Constants.PreferenceKeys.RefreshToken, "");
+        SharedPreferences appPreferences = getSharedPreferences(Constants.PREFS_NAME, 0);
+        String refreshToken = appPreferences.getString(Constants.PreferenceKeys.RefreshToken, "");
 
         Log.d(TAG, Helpers.LogLeaveMethod("GetRefreshToken"));
         return refreshToken;
@@ -185,9 +209,10 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         }
         // Ask for token and provide callback
         try {
+            mAuthority = mAppEnvironment[mAppEnvIndex].getAuthority() + GetUserTenant();
             mAuthContext = new AuthenticationContext(
                     MainActivity.this,
-                    mAppEnvironment[mAppEnvIndex].getAuthority(),
+                    mAuthority,
                     false,
                     InMemoryCacheStore.getInstance());
 
@@ -225,7 +250,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                                 if (result != null && !result.getAccessToken().isEmpty()) {
                                     mCurrentAuthenticationResult = result;
                                     mCurrentUser = mCurrentAuthenticationResult.getUserInfo();
+
                                     SaveRefreshToken(mCurrentAuthenticationResult.getRefreshToken());
+                                    SaveUserTenant(result.getTenantId());
 
                                     getEvents = true;
 
@@ -309,7 +336,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         try {
             mAuthContext = new AuthenticationContext(
                     MainActivity.this,
-                    mAppEnvironment[mAppEnvIndex].getAuthority(),
+                    mAuthority,
                     false,
                     InMemoryCacheStore.getInstance());
 
@@ -509,14 +536,14 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         String subject = "";
         String body = "";
         if(emailType == EmailInfoType.RunningLate) {
-            subject = "Running late for: ";
-            body = "Sorry, I am running late for ";
+            subject = "Running late: ";
+            body = "I'll be a bit late, but I'm on my way for ";
         } else {
-            subject = "I can't make the meeting: ";
-            body = "Sorry, I can't make the meeting ";
+            subject = "Cannot make the meeting: ";
+            body = "Sorry, I can't make it to the meeting ";
         }
         subject = subject + eventItem.getSubject();
-        body = body + "'" + eventItem.getSubject() + "' at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ".";
+        body = body + "'" + eventItem.getSubject() + "' at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ". See you soon.";
 
         new SendEmailAsync().execute(
                 mAppEnvironment[mAppEnvIndex].getSendEmailUri(),
@@ -766,6 +793,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     {
         Helpers.LogIfNull(TAG, mAuthContext, "mAuthContext");
         Helpers.LogIfNull(TAG, mCurrentAuthenticationResult, "mCurrentAuthenticationResult");
+        Helpers.LogIfNull(TAG, mAuthority, "mAuthority");
         Helpers.LogIfNull(TAG, mCurrentUser, "mCurrentUser");
         Helpers.LogIfNull(TAG, mEventsAdapter, "mEventsAdapter");
         Helpers.LogIfNull(TAG, mEventsItems, "mEventsItems");
