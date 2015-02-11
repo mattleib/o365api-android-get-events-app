@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.ActionMode;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -123,6 +124,10 @@ public class EventItemsFragment extends Fragment {
             }
         });
 
+        // contextual floating menu
+        registerForContextMenu(lView);
+
+        /* no action bar context menu
         lView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             public boolean onItemLongClick (AdapterView parent, View view, int position, long id) {
                 Item e = mCallback.getCurrentSelectedItem(position);
@@ -136,7 +141,35 @@ public class EventItemsFragment extends Fragment {
                 return true;
             }
         });
+        */
 
         return rootView;
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        getActivity().getMenuInflater().inflate(R.menu.contextual_list_actions, menu);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+
+        Item e = mCallback.getCurrentSelectedItem(info.position);
+        if(e == null || e.isItemType() != DataTypes.ItemType.event) {
+            return false;
+        }
+
+        switch (item.getItemId()) {
+            case R.id.ctx_action_running_late:
+                mCallback.sendEmail((EventItem)e, DataTypes.EmailInformType.RunningLate);
+                return true;
+            case R.id.ctx_action_cannot_make_it:
+                mCallback.sendEmail((EventItem)e, DataTypes.EmailInformType.CannotMakeIt);
+                return true;
+            default:
+                return super.onContextItemSelected(item);
+        }
     }
 }

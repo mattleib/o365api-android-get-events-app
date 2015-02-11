@@ -8,6 +8,7 @@ import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
@@ -134,6 +135,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
         Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar_actionbar);
         setSupportActionBar(toolbar);
@@ -462,6 +466,29 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         return e;
     }
 
+    private class SendEmailAsync extends AsyncTask<String, Void, Void> {
+
+        protected Void doInBackground(String... params) {
+            try {
+                Office365API.sendEmail(
+                        params[0], //uri
+                        params[1], //subject
+                        params[2], //body
+                        params[3], //name
+                        params[4], //email
+                        params[5] //accesstoken
+                );
+            }
+            catch(Exception e) {
+                Log.d(TAG, Helpers.LogInMethod("SendEmailAsync") + "::Exception", e);
+
+            }
+            finally {
+                return null;
+            }
+        }
+    }
+
     public void sendEmail(EventItem eventItem, DataTypes.EmailInformType emailType)
     {
         Log.d(TAG, Helpers.LogEnterMethod("sendEmail"));
@@ -482,28 +509,29 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         String subject = "";
         String body = "";
         if(emailType == DataTypes.EmailInformType.RunningLate) {
-            subject = "Running Late for: ";
+            subject = "Running late for: ";
             body = "Sorry, I am running late for ";
         } else {
             subject = "I can't make the meeting: ";
             body = "Sorry, I can't make the meeting ";
         }
         subject = subject + eventItem.getSubject();
-        body = body + " at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ".";
+        body = body + "'" + eventItem.getSubject() + "' at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ".";
 
-        try {
-            Office365API.sendEmail(
-                    mAppEnvironment[mAppEnvIndex].getSendEmailUri(),
-                    subject,
-                    body,
-                    eventItem.getOrganizer().getEmailAddress().getName(),
-                    eventItem.getOrganizer().getEmailAddress().getAddress(),
-                    mCurrentAuthenticationResult.getAccessToken()
-            );
-        }
-        catch(Exception e) {
-            Log.d(TAG, Helpers.LogInMethod("sendEmail") + "::Exception", e);
-        }
+        new SendEmailAsync().execute(
+                mAppEnvironment[mAppEnvIndex].getSendEmailUri(),
+                subject,
+                body,
+                eventItem.getOrganizer().getEmailAddress().getName(),
+                eventItem.getOrganizer().getEmailAddress().getAddress(),
+                mCurrentAuthenticationResult.getAccessToken()
+        );
+
+        String name = eventItem.getOrganizer().getEmailAddress().getName().isEmpty() ?
+                eventItem.getOrganizer().getEmailAddress().getAddress() :
+                eventItem.getOrganizer().getEmailAddress().getName();
+
+        Toast.makeText(getApplicationContext(), "Email sent to " + name, Toast.LENGTH_SHORT).show();
 
         Log.d(TAG, Helpers.LogLeaveMethod("sendEmail"));
     }

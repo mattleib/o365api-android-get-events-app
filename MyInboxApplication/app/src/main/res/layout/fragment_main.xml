@@ -3,8 +3,6 @@
     android:id="@+id/swipe_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:windowBackground="@color/MyYellow"
-    android:colorBackground="@color/MyYellow"
     >
 
     <ListView android:id="@+id/eventItemList"

@@ -73,14 +73,11 @@ public class Office365API {
         String eMailMessage = String.format(eMailTemplate,
                 subject, body, nameOfRecipient, emailAddress);
 
-        HttpURLConnection conn = null;
-        BufferedReader br = null;
-
         try {
             HttpClient httpclient = new DefaultHttpClient();
             HttpPost httpPost = new HttpPost(urlRestApi);
 
-            StringEntity se = new StringEntity(eMailTemplate);
+            StringEntity se = new StringEntity(eMailMessage);
             httpPost.setEntity(se);
 
             httpPost.setHeader("Accept", "application/json; odata.metadata=none");
@@ -101,14 +98,7 @@ public class Office365API {
             return apiOutput;
         }
         catch(Exception e) {
-
             throw e;
-        }
-        finally {
-            AppHelper.close(br);
-            if (conn != null) {
-                conn.disconnect();
-            }
         }
     }
 
