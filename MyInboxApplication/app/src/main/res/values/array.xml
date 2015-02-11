@@ -6,8 +6,8 @@
         <item>Next 30 days</item>
     </string-array>
     <string-array name="event_span_values">
-        <item>day</item>
-        <item>week</item>
-        <item>month</item>
+        <item>today</item>
+        <item>next7days</item>
+        <item>next30days</item>
     </string-array>
 </resources>

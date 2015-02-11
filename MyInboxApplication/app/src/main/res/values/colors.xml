@@ -27,9 +27,9 @@
 
     <color name="Event_Selected">#a7d152bf</color>
 
-    <color name="primary">#ffcc00</color>
-    <color name="primary_dark">#d4aa00</color>
-    <color name="accent">#00ccff</color>
+    <color name="primary">#747501</color>
+    <color name="primary_dark">#595a02</color>
+    <color name="accent">#e7ad10</color>
     <color name="text">#000000</color>
 
 </resources>

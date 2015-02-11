@@ -57,7 +57,7 @@ public class EventsAdapter extends ArrayAdapter<Item>
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
         boolean useCoolColors = preferences.getBoolean(Constants.PreferenceKeys.UseCoolColors, false);
 
-        if(i.isItemType() == DataTypes.ItemType.section) {
+        if(i.isItemType() == ItemType.Section) {
             v = vi.inflate(R.layout.eventsection_row_layout, null);
 
             if(useCoolColors) {
@@ -74,14 +74,14 @@ public class EventsAdapter extends ArrayAdapter<Item>
                     startTime.getLocalDayOfWeekString() + ",  " + startTime.getLocalDayString()
             );
 
-        } else if (i.isItemType() == DataTypes.ItemType.event) {
+        } else if (i.isItemType() == ItemType.Event) {
             v = vi.inflate(R.layout.eventitem_row_layout, null);
 
             EventItem e = (EventItem) i;
             LocalDateTimeConverter startTime = new LocalDateTimeConverter(e.getStart());
             LocalDateTimeConverter endTime = new LocalDateTimeConverter(e.getEnd());
 
-            if (startTime.IsAm()) {
+            if (startTime.isAM()) {
                 if(useCoolColors) {
                     v.setBackgroundColor(context.getResources().getColor(R.color.Event_Normal_AM_Cool));
                 } else {
@@ -108,14 +108,17 @@ public class EventsAdapter extends ArrayAdapter<Item>
             String localEndTime = endTime.getLocalTimeString();
             String localEndDay = endTime.getLocalDayString();
             if (e.IsAllDay) {
-                start.setText("All Day Event");
+                start.setText(context.getResources().getString(R.string.event_all_day));
                 if(useCoolColors) {
                     v.setBackgroundColor(context.getResources().getColor(R.color.Event_AllDay_Cool));
                 } else {
                     v.setBackgroundColor(context.getResources().getColor(R.color.Event_AllDay_Warm));
                 }
             } else {
-                start.setText(localStartTime + " to " + localEndTime + " (" + localEndDay + ")");
+                String s = String.format(
+                        context.getResources().getString(R.string.event_template_startdate),
+                        localStartTime, localEndTime, localEndDay);
+                start.setText(s);
             }
 
 
@@ -125,7 +128,10 @@ public class EventsAdapter extends ArrayAdapter<Item>
             } else if (e.getLocation().getDisplayName().isEmpty()) {
                 location.setVisibility(View.GONE);
             } else {
-                location.setText("Location: " + e.getLocation().getDisplayName());
+                String s = String.format(
+                        context.getResources().getString(R.string.event_template_location),
+                        e.getLocation().getDisplayName());
+                location.setText(s);
             }
 
             TextView organizer = (TextView) v.findViewById(R.id.organizer);
@@ -144,7 +150,12 @@ public class EventsAdapter extends ArrayAdapter<Item>
                     v.setBackgroundColor(context.getResources().getColor(R.color.Event_OnMyOwn_Warm));
                 }
             } else {
-                organizer.setText("Organizer: " + e.getOrganizer().getEmailAddress().getName());
+                String s = String.format(
+                        context.getResources().getString(R.string.event_template_organizer),
+                        e.getOrganizer().getEmailAddress().getName().isEmpty() ?
+                                e.getOrganizer().getEmailAddress().getAddress() :
+                                e.getOrganizer().getEmailAddress().getName());
+                organizer.setText(s);
             }
 
             if (e.getIsCancelled()) {

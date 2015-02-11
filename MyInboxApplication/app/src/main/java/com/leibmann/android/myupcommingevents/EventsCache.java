@@ -17,7 +17,7 @@ public class EventsCache {
     private static final String TAG = "EventsCache";
     private static final String FileName = "events_file";
 
-    public static Boolean Write(ArrayList<Item> items, Context context)
+    public static Boolean write(ArrayList<Item> items, Context context)
     {
         Log.d(TAG, Helpers.LogEnterMethod("Write"));
 
@@ -38,7 +38,7 @@ public class EventsCache {
         }
     }
 
-    public static ArrayList<Item> Read(Context context)
+    public static ArrayList<Item> read(Context context)
     {
         Log.d(TAG, Helpers.LogEnterMethod("Read"));
 

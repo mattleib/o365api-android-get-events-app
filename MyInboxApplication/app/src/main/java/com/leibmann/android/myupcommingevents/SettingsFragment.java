@@ -51,18 +51,18 @@ public class SettingsFragment extends PreferenceFragment
         mEventsSpanSummary = preference.getSummary().toString();
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
-        String eventSpan = sharedPreferences.getString("PREF_CALENDAR_SPAN", "week");
+        String eventSpan = sharedPreferences.getString("PREF_CALENDAR_SPAN", "next7days");
         adjustEventSpanSummary(eventSpan);
     }
 
     private void adjustEventSpanSummary(String eventSpan)
     {
         Preference preference = findPreference(Constants.PreferenceKeys.CalendarTimeSpan);
-        if(eventSpan.equals("day")) { /// day
+        if(eventSpan.equals("today")) {
             preference.setSummary(mEventsSpanSummary + " today.");
-        } else if (eventSpan.equals("week")) { /// week
+        } else if (eventSpan.equals("next7days")) {
             preference.setSummary(mEventsSpanSummary + " next seven days.");
-        } else { // month
+        } else {
             preference.setSummary(mEventsSpanSummary + " next 30 days.");
         }
     }

@@ -59,7 +59,7 @@ public class Helpers {
     }
 
     public static String GetEventsQueryString(String queryTemplate,
-                                              DataTypes.EventTimeSpan eventTimeSpan,
+                                              EventTimeSpan eventTimeSpan,
                                               Boolean doNotShowPastEvents) {
         // "Start": "2015-01-23T20:00:00Z",
         // "End": "2015-01-23T21:00:00Z",
@@ -84,9 +84,9 @@ public class Helpers {
         SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String startDateTime = fmt.format(startDate);
 
-        if (eventTimeSpan == DataTypes.EventTimeSpan.Day) {
+        if (eventTimeSpan == EventTimeSpan.Today) {
             cal.add(Calendar.HOUR, 24);
-        } else if (eventTimeSpan == DataTypes.EventTimeSpan.Week) {
+        } else if (eventTimeSpan == EventTimeSpan.NextSevenDays) {
             cal.add(Calendar.HOUR, 24 * 7);
         } else { // 30 days
             cal.add(Calendar.HOUR, 24 * 30);

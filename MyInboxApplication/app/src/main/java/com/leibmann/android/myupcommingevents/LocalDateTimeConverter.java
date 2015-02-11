@@ -39,7 +39,7 @@ public class LocalDateTimeConverter {
         return s;
     }
 
-    public boolean IsAm() {
+    public boolean isAM() {
         String s = mLocalTime.format("%p");
         boolean am = s.toLowerCase().equals("am");
         return am;

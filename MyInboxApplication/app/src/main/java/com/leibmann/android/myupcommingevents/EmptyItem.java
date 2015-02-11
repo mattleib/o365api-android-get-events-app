@@ -9,8 +9,8 @@ public class EmptyItem implements Serializable, Item {
 
     private static final long serialVersionUID = 0L;
 
-    public DataTypes.ItemType isItemType() {
-        return DataTypes.ItemType.empty;
+    public ItemType isItemType() {
+        return ItemType.Empty;
     }
 
     protected String ErrorMessage;

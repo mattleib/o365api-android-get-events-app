@@ -22,7 +22,7 @@ public class SettingsActivity extends Activity
                 .commit();
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String eventSpan = sharedPreferences.getString(Constants.PreferenceKeys.CalendarTimeSpan, "day");
+        String eventSpan = sharedPreferences.getString(Constants.PreferenceKeys.CalendarTimeSpan, "next7days");
         Boolean usePPE = sharedPreferences.getBoolean(Constants.PreferenceKeys.UsePPE, false);
         Boolean useCoolColors = sharedPreferences.getBoolean(Constants.PreferenceKeys.UseCoolColors, false);
         Boolean doNotShowPastEvents = sharedPreferences.getBoolean(Constants.PreferenceKeys.DoNotShowPastEvents, false);

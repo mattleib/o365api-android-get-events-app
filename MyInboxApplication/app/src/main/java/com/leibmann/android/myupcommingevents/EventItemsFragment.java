@@ -22,6 +22,8 @@ import android.widget.ListView;
  */
 public class EventItemsFragment extends Fragment {
 
+    /* Not needed - using floating context menu instead
+
     private int mSelectedItemPosition = Constants.NO_ITEM_SELECTED;
 
     private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
@@ -36,7 +38,7 @@ public class EventItemsFragment extends Fragment {
         }
 
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-            mode.setTitle("Inform Organizer");
+            mode.setTitle(getActivity().getResources().getString(R.string.title_context_action_menu));
             mode.getMenuInflater().inflate(R.menu.contextual_list_actions, menu);
             return true;
         }
@@ -47,12 +49,12 @@ public class EventItemsFragment extends Fragment {
             int id = item.getItemId();
             switch (id) {
                 case R.id.ctx_action_cannot_make_it: {
-                    mCallback.sendEmail(eventItem, DataTypes.EmailInformType.CannotMakeIt);
+                    mCallback.sendEmail(eventItem, EmailInfoType.CannotMakeIt);
                     mode.finish();
                     break;
                 }
                 case R.id.ctx_action_running_late: {
-                    mCallback.sendEmail(eventItem, DataTypes.EmailInformType.RunningLate);
+                    mCallback.sendEmail(eventItem, EmailInfoType.RunningLate);
                     mode.finish();
                     break;
                 }
@@ -62,12 +64,13 @@ public class EventItemsFragment extends Fragment {
             return true;
         }
     };
+    */
 
     public interface EventRefresh{
         // Interface method you will call from this fragment
         public void onRefreshEvents();
         public Item getCurrentSelectedItem(int position);
-        public void sendEmail(EventItem eventItem, DataTypes.EmailInformType emailType);
+        public void sendEmail(EventItem eventItem, EmailInfoType emailType);
     }// end interface
 
 
@@ -83,7 +86,7 @@ public class EventItemsFragment extends Fragment {
         } catch(Exception e) {
             e.printStackTrace();
         }
-    }// end onAttach()
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -105,7 +108,7 @@ public class EventItemsFragment extends Fragment {
                         mCallback.onRefreshEvents();
                         swipeView.setRefreshing(false);
                     }
-                }, 1000);
+                }, 0);
             }
         });
 
@@ -127,7 +130,7 @@ public class EventItemsFragment extends Fragment {
         // contextual floating menu
         registerForContextMenu(lView);
 
-        /* no action bar context menu
+        /* not needed using floating context menu instead
         lView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             public boolean onItemLongClick (AdapterView parent, View view, int position, long id) {
                 Item e = mCallback.getCurrentSelectedItem(position);
@@ -157,16 +160,16 @@ public class EventItemsFragment extends Fragment {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
 
         Item e = mCallback.getCurrentSelectedItem(info.position);
-        if(e == null || e.isItemType() != DataTypes.ItemType.event) {
+        if(e == null || e.isItemType() != ItemType.Event) {
             return false;
         }
 
         switch (item.getItemId()) {
             case R.id.ctx_action_running_late:
-                mCallback.sendEmail((EventItem)e, DataTypes.EmailInformType.RunningLate);
+                mCallback.sendEmail((EventItem)e, EmailInfoType.RunningLate);
                 return true;
             case R.id.ctx_action_cannot_make_it:
-                mCallback.sendEmail((EventItem)e, DataTypes.EmailInformType.CannotMakeIt);
+                mCallback.sendEmail((EventItem)e, EmailInfoType.CannotMakeIt);
                 return true;
             default:
                 return super.onContextItemSelected(item);

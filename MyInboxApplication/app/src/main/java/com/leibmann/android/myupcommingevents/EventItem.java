@@ -12,8 +12,8 @@ public class EventItem implements Serializable, Item {
 
     private static final long serialVersionUID = 0L;
 
-    public DataTypes.ItemType isItemType() {
-        return DataTypes.ItemType.event;
+    public ItemType isItemType() {
+        return ItemType.Event;
     }
 
     protected String Subject;

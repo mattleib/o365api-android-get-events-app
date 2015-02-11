@@ -388,9 +388,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
 
         // Checks the orientation of the screen
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            Toast.makeText(this, "Switching to Landscape", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Switching to Landscape", Toast.LENGTH_SHORT).show();
         } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-            Toast.makeText(this, "Switching to Portrait", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Switching to Portrait", Toast.LENGTH_SHORT).show();
         }
 
         Log.d(TAG, Helpers.LogLeaveMethod("onConfigurationChanged"));
@@ -489,7 +489,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         }
     }
 
-    public void sendEmail(EventItem eventItem, DataTypes.EmailInformType emailType)
+    public void sendEmail(EventItem eventItem, EmailInfoType emailType)
     {
         Log.d(TAG, Helpers.LogEnterMethod("sendEmail"));
 
@@ -508,7 +508,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
 
         String subject = "";
         String body = "";
-        if(emailType == DataTypes.EmailInformType.RunningLate) {
+        if(emailType == EmailInfoType.RunningLate) {
             subject = "Running late for: ";
             body = "Sorry, I am running late for ";
         } else {
@@ -603,29 +603,29 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Boolean doNotShowPastEvents = sharedPreferences.getBoolean(Constants.PreferenceKeys.DoNotShowPastEvents, false);
         String eventsQuery = "";
 
-        if(eventSpan.equals("week")) { /// week
+        if(eventSpan.equals("next7days")) {
 
             eventsQuery = Helpers.GetEventsQueryString(
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
-                    DataTypes.EventTimeSpan.Week,
+                    EventTimeSpan.NextSevenDays,
                     doNotShowPastEvents);
 
-        } else if (eventSpan.equals("month")) { /// month
+        } else if (eventSpan.equals("next30days")) { /// month
 
             eventsQuery = Helpers.GetEventsQueryString(
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
-                    DataTypes.EventTimeSpan.Month,
+                    EventTimeSpan.NextThirtyDays,
                     doNotShowPastEvents);
         } else {
 
             eventsQuery = Helpers.GetEventsQueryString(
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
-                    DataTypes.EventTimeSpan.Day,
+                    EventTimeSpan.Today,
                     doNotShowPastEvents);
         }
 
         // Read event items from cache and display immediately
-        ArrayList<Item> items = EventsCache.Read(getApplicationContext());
+        ArrayList<Item> items = EventsCache.read(getApplicationContext());
         if(items != null) {
             mEventsAdapter.setItemList(items);
             mEventsAdapter.notifyDataSetChanged();
@@ -740,7 +740,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                 mEventsItems = items;
 
                 // write event items to cache
-                EventsCache.Write(items, getApplicationContext());
+                EventsCache.write(items, getApplicationContext());
 
                 Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::doInBackground");
                 return items;
@@ -762,12 +762,6 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         }
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        // The activity is about to become visible.
-    }
-
     private void doNullChecks()
     {
         Helpers.LogIfNull(TAG, mAuthContext, "mAuthContext");
@@ -787,6 +781,12 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         doNullChecks();
 
         Log.d(TAG, Helpers.LogLeaveMethod("onResume"));
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // The activity is about to become visible.
     }
 
     @Override
