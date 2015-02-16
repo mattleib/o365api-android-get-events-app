@@ -26,12 +26,14 @@ public class SettingsActivity extends Activity
         Boolean usePPE = sharedPreferences.getBoolean(Constants.PreferenceKeys.UsePPE, false);
         Boolean useCoolColors = sharedPreferences.getBoolean(Constants.PreferenceKeys.UseCoolColors, false);
         Boolean doNotShowPastEvents = sharedPreferences.getBoolean(Constants.PreferenceKeys.DoNotShowPastEvents, false);
+        Boolean doNotifications = sharedPreferences.getBoolean(Constants.PreferenceKeys.DoNotifications, true);
 
         mPreferenceSettings = new PreferenceSettings(
                 new PreferenceSetting(eventSpan, eventSpan),
                 new PreferenceSetting(usePPE.toString(), usePPE.toString()),
                 new PreferenceSetting(useCoolColors.toString(), useCoolColors.toString()),
-                new PreferenceSetting(doNotShowPastEvents.toString(), doNotShowPastEvents.toString())
+                new PreferenceSetting(doNotShowPastEvents.toString(), doNotShowPastEvents.toString()),
+                new PreferenceSetting(doNotifications.toString(), doNotifications.toString())
         );
         setIntent();
     }
@@ -66,6 +68,11 @@ public class SettingsActivity extends Activity
 
     public void onNoPastEventsChanged(Boolean doNotShowPastEvents) {
         mPreferenceSettings.getDoNotShowPastEvents().setNewValue(doNotShowPastEvents.toString());
+        setIntent();
+    }
+
+    public void onDoNotifications(Boolean doNotifications) {
+        mPreferenceSettings.getDoNotifications().setNewValue(doNotifications.toString());
         setIntent();
     }
 }

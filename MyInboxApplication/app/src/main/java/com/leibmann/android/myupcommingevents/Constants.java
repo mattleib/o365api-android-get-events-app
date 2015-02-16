@@ -44,6 +44,7 @@ public class Constants {
         public static final String RefreshToken = "PREF_REFRESHTOKEN";
         public static final String UserTenant = "PREF_AUTHTENANT";
         public static final String DoNotShowPastEvents = "PREF_NOPASTEVENTS";
+        public static final String DoNotifications = "PREF_DONOTIFICATIONS";
     }
 
     public static final String PREFS_NAME = "MyPrefsFile";

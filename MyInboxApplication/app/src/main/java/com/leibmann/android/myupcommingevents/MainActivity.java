@@ -1,5 +1,7 @@
 package com.leibmann.android.myupcommingevents;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -30,6 +32,7 @@ import com.microsoft.aad.adal.UserInfo;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 
 public class MainActivity extends ActionBarActivity implements EventItemsFragment.EventRefresh {
@@ -37,7 +40,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     //
     // Name of the Module for Logcat display's etc.
     //
-    private static String TAG = "MainActivity";
+    private final static String TAG = "MainActivity";
 
     //
     // ADAL authentication context and result for app
@@ -87,6 +90,8 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     private static int mAppEnvIndex = Constants.IDX_PROD;
     private static String mAuthority = ""; // remember the authority for this session
 
+    private static AlarmManager mAlarmManager = null; // Alarm manager for the event notification service
+    private static PendingIntent mPendingIntent = null; // pending intent for event notification receiver
 
     //
     // Set the current environment the app operates on
@@ -187,6 +192,17 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         //
         SignOn(true);
 
+        //
+        // Create Intent for Event Notifications Receiver
+        //
+        Intent intent = new Intent(MainActivity.this, NotificationAlarmReceiver.class);
+        mPendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
+
+        //
+        // Start alarm
+        //
+        startAlarmForEventNotifications();
+
         Toast.makeText(getApplicationContext(), "Welcome. Let's get busy!", Toast.LENGTH_SHORT).show();
 
         Log.d(TAG, Helpers.LogLeaveMethod("onCreate"));
@@ -213,8 +229,8 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             mAuthContext = new AuthenticationContext(
                     MainActivity.this,
                     mAuthority,
-                    false,
-                    InMemoryCacheStore.getInstance());
+                    false); // use built in cache
+                    //InMemoryCacheStore.getInstance());
 
             mAuthContext.acquireToken(
                     MainActivity.this,
@@ -337,8 +353,8 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             mAuthContext = new AuthenticationContext(
                     MainActivity.this,
                     mAuthority,
-                    false,
-                    InMemoryCacheStore.getInstance());
+                    false);
+                    //InMemoryCacheStore.getInstance());
 
             mCurrentAuthenticationResult = mAuthContext.acquireTokenSilentSync(
                     mAppEnvironment[mAppEnvIndex].getResourceExchange(),
@@ -372,6 +388,11 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         if(requestCode == Constants.PICK_PREFERENCE_REQUEST){
 
             PreferenceSettings preference = (PreferenceSettings)data.getSerializableExtra(PreferenceSettings.SER_KEY);
+
+            if(preference.getDoNotifications().getHasChanged())
+            {
+                startAlarmForEventNotifications();
+            }
 
             if(preference.getUsePPE().getHasChanged()) {
                 if (preference.getUsePPE().getNewValue().equals("true")) {
@@ -789,6 +810,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         }
     }
 
+
     private void doNullChecks()
     {
         Helpers.LogIfNull(TAG, mAuthContext, "mAuthContext");
@@ -809,6 +831,43 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         doNullChecks();
 
         Log.d(TAG, Helpers.LogLeaveMethod("onResume"));
+    }
+
+    private void startAlarmForEventNotifications(){
+        Log.d(TAG, Helpers.LogEnterMethod("startAlarmForEventNotifications"));
+
+        // First cancel the old alarm
+        cancelAlarmForEventNotifications();
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean doNotifications = sharedPreferences.getBoolean(Constants.PreferenceKeys.DoNotifications, true);
+
+        if(!doNotifications) {
+            Log.d(TAG, Helpers.LogLeaveMethod("startAlarmForEventNotifications") + "::Notifications turned off");
+            return;
+        }
+
+        // Start a new alarm in 30 seconds to allow boot up time
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.SECOND, 30);
+        long firstTime = c.getTimeInMillis();
+
+        // Repeat every 10 minutes, but don't wake-up device
+        mAlarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
+        mAlarmManager.setInexactRepeating(
+                AlarmManager.RTC,
+                firstTime,
+                (Constants.OneMinuteInMilliseconds*10),
+                mPendingIntent);
+
+        Log.d(TAG, Helpers.LogLeaveMethod("startAlarmForEventNotifications") + "::Alarm turned on");
+    }
+
+    private void cancelAlarmForEventNotifications() {
+        if(mAlarmManager != null) {
+            mAlarmManager.cancel(mPendingIntent);
+            mAlarmManager = null;
+        }
     }
 
     @Override
@@ -833,6 +892,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     protected void onDestroy() {
         super.onDestroy();
         // The activity is about to be destroyed.
+        cancelAlarmForEventNotifications();
     }
 
 }

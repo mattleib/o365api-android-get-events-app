@@ -19,6 +19,7 @@ public class SettingsFragment extends PreferenceFragment
         public void onEnvironmentChanged(Boolean usePPE);
         public void onColorChanged(Boolean useCool);
         public void onNoPastEventsChanged(Boolean doNotShowPastEvents);
+        public void onDoNotifications(Boolean doNotifications);
     }// end interface
 
     // Instantiate the Interface Callback
@@ -51,7 +52,7 @@ public class SettingsFragment extends PreferenceFragment
         mEventsSpanSummary = preference.getSummary().toString();
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
-        String eventSpan = sharedPreferences.getString("PREF_CALENDAR_SPAN", "next7days");
+        String eventSpan = sharedPreferences.getString(Constants.PreferenceKeys.CalendarTimeSpan, "next7days");
         adjustEventSpanSummary(eventSpan);
     }
 
@@ -81,6 +82,9 @@ public class SettingsFragment extends PreferenceFragment
         } else if (key.equals(Constants.PreferenceKeys.DoNotShowPastEvents)) {
             Boolean newValue = sharedPreferences.getBoolean(key, false);
             mCallback.onNoPastEventsChanged(newValue);
+        } else if (key.equals(Constants.PreferenceKeys.DoNotifications)) {
+            Boolean newValue = sharedPreferences.getBoolean(key, false);
+            mCallback.onDoNotifications(newValue);
         }
     }
 
