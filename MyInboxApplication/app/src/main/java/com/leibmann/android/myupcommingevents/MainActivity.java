@@ -559,12 +559,14 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         if(emailType == EmailInfoType.RunningLate) {
             subject = "Running late: ";
             body = "I'll be a bit late, but I'm on my way for ";
+            body = body + "(" + eventItem.getSubject() + ") at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ". See you soon.";
         } else {
             subject = "Cannot make the meeting: ";
             body = "Sorry, I can't make it to the meeting ";
+            body = body + "(" + eventItem.getSubject() + ") at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ".";
         }
         subject = subject + eventItem.getSubject();
-        body = body + "'" + eventItem.getSubject() + "' at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ". See you soon.";
+
 
         new SendEmailAsync().execute(
                 mAppEnvironment[mAppEnvIndex].getSendEmailUri(),

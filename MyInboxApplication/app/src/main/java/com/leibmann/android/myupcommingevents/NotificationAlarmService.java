@@ -45,7 +45,6 @@ public class NotificationAlarmService extends Service {
         super.onDestroy();
     }
 
-    // @SuppressWarnings("static-access")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, Helpers.LogEnterMethod("onStartCommand"));
@@ -54,6 +53,7 @@ public class NotificationAlarmService extends Service {
         ArrayList<Item> items = EventsCache.read(getApplicationContext());
         if(items == null) {
             Log.d(TAG, Helpers.LogLeaveMethod("onStartCommand") + "::No events in cache");
+            mNotificationManager.cancel(NOTIFICATIONID);
             return START_NOT_STICKY; // stop service after it's done the work
         }
 
@@ -63,7 +63,9 @@ public class NotificationAlarmService extends Service {
             Item item = (Item)e.nextElement();
             if(item.isItemType() == ItemType.Event) {
                 EventItem event = (EventItem) item;
-                if (Helpers.IsEventNow(event.getStart(), event.getEnd()) && !event.IsAllDay) {
+                if (Helpers.IsEventNow(event.getStart(), event.getEnd()) &&
+                        !event.IsAllDay &&
+                        !event.getIsCancelled()) {
                     upcomingEvents.add(event);
                 }
             }
@@ -71,17 +73,14 @@ public class NotificationAlarmService extends Service {
 
         if(upcomingEvents.size() <= 0) {
             Log.d(TAG, Helpers.LogLeaveMethod("onStartCommand") + "::No upcoming events");
+            mNotificationManager.cancel(NOTIFICATIONID);
             return START_NOT_STICKY; // stop service after it's done the work
         }
 
         EventItem event = (EventItem) upcomingEvents.get(0);
         LocalDateTimeConverter startTime = new LocalDateTimeConverter(event.getStart());
-        LocalDateTimeConverter endTime = new LocalDateTimeConverter(event.getEnd());
 
-        String s = String.format(
-                getApplicationContext().getResources().getString(R.string.event_template_startdate),
-                startTime.getLocalTimeString(), endTime.getLocalTimeString(), endTime.getLocalDayString());
-        s = "Up next: " + s + " " + event.Subject;
+        String s = "Up next: " + startTime.getLocalTimeString() + " " + event.Subject;
 
         // Now we do the notification for the events ...
         NotificationCompat.Builder mBuilder =
@@ -92,6 +91,9 @@ public class NotificationAlarmService extends Service {
 
         // Q: !!! How do I pass the Pending Intent to go back to the apps MainActivity?
         // mBuilder.setContentIntent(intent);
+
+        // Show on lockscreen
+        mBuilder.setVisibility(Notification.VISIBILITY_PUBLIC);
 
         mNotificationManager.notify(NOTIFICATIONID, mBuilder.build());
 
