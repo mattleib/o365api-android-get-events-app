@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -21,6 +22,10 @@ public class NotificationAlarmReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        //Acquire the lock
+        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+        wl.acquire();
 
         Log.d(TAG, Helpers.LogEnterMethod("onReceive"));
 
@@ -31,6 +36,9 @@ public class NotificationAlarmReceiver extends BroadcastReceiver {
         Toast.makeText(context, "Alarm Received", Toast.LENGTH_SHORT).show();
 
         Log.d(TAG, Helpers.LogLeaveMethod("onReceive"));
+
+        //Release the lock
+        wl.release();
     }
 
 }

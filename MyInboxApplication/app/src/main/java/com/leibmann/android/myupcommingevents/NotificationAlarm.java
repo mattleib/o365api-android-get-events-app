@@ -22,14 +22,11 @@ public class NotificationAlarm {
     private final static String TAG = "NotificationAlarm";
 
     private AlarmManager mAlarmManager = null; // Alarm manager for the event notification service
-    private PendingIntent mPendingIntent = null; // pending intent for event notification receiver
     private Context mContext;
 
     public NotificationAlarm(Context context) {
         mContext = context;
         mAlarmManager = (AlarmManager)context.getSystemService(context.ALARM_SERVICE);
-        Intent intent = new Intent(context, NotificationAlarmReceiver.class);
-        mPendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
     }
 
     public void startAlarmForEventNotifications(){
@@ -58,9 +55,9 @@ public class NotificationAlarm {
         long eventAlarmTime = startTime.getLocalTime().toMillis(false) - (Constants.OneMinuteInMilliseconds*15);
 
         mAlarmManager.set(
-                AlarmManager.RTC,
+                AlarmManager.RTC_WAKEUP,
                 eventAlarmTime,
-                mPendingIntent);
+                MainActivity.getAlarmPendingIntent());
 
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(eventAlarmTime);
@@ -74,6 +71,6 @@ public class NotificationAlarm {
     }
 
     public void cancelAlarmForEventNotifications() {
-        mAlarmManager.cancel(mPendingIntent);
+        mAlarmManager.cancel(MainActivity.getAlarmPendingIntent());
     }
 }

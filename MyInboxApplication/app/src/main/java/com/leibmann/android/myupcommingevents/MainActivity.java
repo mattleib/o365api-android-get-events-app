@@ -92,6 +92,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
 
     // Alarm for event notifications
     private static NotificationAlarm mNotificationAlarm = null;
+    private static PendingIntent mPendingIntent = null;
 
     //
     // Set the current environment the app operates on
@@ -148,7 +149,12 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
 
         // Create the notification alarm for sending event reminders as notifications
         if(mNotificationAlarm == null) {
-            mNotificationAlarm = new NotificationAlarm(getApplicationContext());
+            mNotificationAlarm = new NotificationAlarm(MainActivity.this);
+        }
+
+        if(mPendingIntent == null) {
+            Intent intent = new Intent(MainActivity.this, NotificationAlarmReceiver.class);
+            mPendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
         }
 
         Toast.makeText(getApplicationContext(), "Welcome. Let's get busy!", Toast.LENGTH_SHORT).show();
@@ -757,7 +763,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                 // write event items to cache
                 EventsCache.write(items, getApplicationContext());
 
-                mNotificationAlarm.startAlarmForEventNotifications();
+                startAlarm();
 
                 Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::doInBackground");
                 return items;
@@ -776,6 +782,21 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                 return items;
 
             }
+        }
+    }
+
+    public static PendingIntent getAlarmPendingIntent() {
+        return mPendingIntent;
+    }
+
+    public static void startAlarm() {
+        if(mNotificationAlarm != null) {
+            mNotificationAlarm.startAlarmForEventNotifications();
+        }
+    }
+    public static void cancelAlarms() {
+        if(mNotificationAlarm != null) {
+            mNotificationAlarm.cancelAlarmForEventNotifications();
         }
     }
 
@@ -824,7 +845,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     protected void onDestroy() {
         super.onDestroy();
         // The activity is about to be destroyed.
-        mNotificationAlarm.cancelAlarmForEventNotifications();
+        cancelAlarms();
     }
 
 }

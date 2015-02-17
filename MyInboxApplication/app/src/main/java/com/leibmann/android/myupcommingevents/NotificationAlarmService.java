@@ -81,10 +81,10 @@ public class NotificationAlarmService extends Service {
                     startTime.getLocalTimeString(),
                     firstEvent.getSubject());
 
-            String msg = firstEvent.getSubject();
+            String msg = s;
             if(!firstEvent.getLocation().getDisplayName().isEmpty()) {
                 msg = String.format("%s.  Location (%s)",
-                        msg,
+                        s,
                         firstEvent.getLocation().getDisplayName());
             }
 
@@ -109,8 +109,7 @@ public class NotificationAlarmService extends Service {
         }
 
         // set the next alarm for next upcoming event...
-        NotificationAlarm notificationAlarm = new NotificationAlarm(context);
-        notificationAlarm.startAlarmForEventNotifications();
+        MainActivity.startAlarm();
 
         Log.d(TAG, Helpers.LogLeaveMethod("onStartCommand"));
         return START_NOT_STICKY; // stop service after it's done the work
