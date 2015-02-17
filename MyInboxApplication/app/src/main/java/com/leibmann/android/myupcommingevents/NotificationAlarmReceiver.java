@@ -28,7 +28,7 @@ public class NotificationAlarmReceiver extends BroadcastReceiver {
         Intent service = new Intent(context, NotificationAlarmService.class);
         context.startService(service);
 
-        // Toast.makeText(context, "Alarm Received", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, "Alarm Received", Toast.LENGTH_SHORT).show();
 
         Log.d(TAG, Helpers.LogLeaveMethod("onReceive"));
     }

@@ -77,14 +77,25 @@ public class NotificationAlarmService extends Service {
         if(firstEvent != null) {
             LocalDateTimeConverter startTime = new LocalDateTimeConverter(firstEvent.getStart());
 
-            String s = "Next: " + startTime.getLocalTimeString() + " " + firstEvent.Subject;
+            String s = String.format("Next: %s %s",
+                    startTime.getLocalTimeString(),
+                    firstEvent.getSubject());
+
+            String msg = firstEvent.getSubject();
+            if(!firstEvent.getLocation().getDisplayName().isEmpty()) {
+                msg = String.format("%s.  Location (%s)",
+                        msg,
+                        firstEvent.getLocation().getDisplayName());
+            }
 
             // Now we do the notification for the events ...
             NotificationCompat.Builder mBuilder =
                     new NotificationCompat.Builder(this)
                             .setSmallIcon(R.drawable.ic_event_24px)
                             .setContentTitle("Office 365 Upcoming Events")
-                            .setContentText(s).setNumber(mNumMessages);
+                            .setContentText(s).setNumber(mNumMessages)
+                            .setStyle(new NotificationCompat.BigTextStyle()
+                            .bigText(msg));
 
             // Notification start MainActivity
             Intent mainActivityIntent = new Intent(context, MainActivity.class);

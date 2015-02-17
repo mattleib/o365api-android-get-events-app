@@ -1,6 +1,7 @@
 package com.leibmann.android.myupcommingevents;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.text.format.Time;
 import android.util.Log;
 
@@ -62,7 +63,22 @@ public class Helpers {
         }
     }
 
-    public static String GetEventsQueryString(String queryTemplate,
+    public static void savePreferenceValue(String preferenceKey, String preferenceValue, Context context)
+    {
+        SharedPreferences appPreferences = context.getSharedPreferences(Constants.PREFS_NAME, 0);
+        SharedPreferences.Editor editor = appPreferences.edit();
+        editor.putString(preferenceKey, preferenceValue);
+        editor.commit();
+    }
+
+    public static String getPreferenceValue(String preferenceKey, String preferenceDefault, Context context)
+    {
+        SharedPreferences appPreferences = context.getSharedPreferences(Constants.PREFS_NAME, 0);
+        String s = appPreferences.getString(preferenceKey, preferenceDefault);
+        return s;
+    }
+
+    public static String getEventsQueryString(String queryTemplate,
                                               EventTimeSpan eventTimeSpan,
                                               Boolean doNotShowPastEvents) {
         // "Start": "2015-01-23T20:00:00Z",

@@ -62,10 +62,13 @@ public class NotificationAlarm {
                 eventAlarmTime,
                 mPendingIntent);
 
-        Calendar c = Calendar.getInstance();
-        c.setTimeInMillis(eventAlarmTime);
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(eventAlarmTime);
+        int zoneOffset = cal.get(Calendar.ZONE_OFFSET);
+        int dstOffset = cal.get(Calendar.DST_OFFSET);
+        cal.add(Calendar.MILLISECOND, -(zoneOffset + dstOffset));
         SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String alarmTimeString = fmt.format(c.getTime());
+        String alarmTimeString = fmt.format(cal.getTime());
 
         Log.d(TAG, Helpers.LogLeaveMethod("startAlarmForEventNotifications") + "::Alarm turned on for [" + alarmTimeString + "]");
     }

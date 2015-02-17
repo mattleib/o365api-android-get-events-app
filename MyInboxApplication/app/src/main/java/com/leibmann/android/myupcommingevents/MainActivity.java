@@ -88,7 +88,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             )
     };
     private static int mAppEnvIndex = Constants.IDX_PROD;
-    private static String mAuthority = ""; // remember the authority for this session
+    // private static String mAuthority = ""; // remember the authority for this session
 
     // Alarm for event notifications
     private static NotificationAlarm mNotificationAlarm = null;
@@ -109,52 +109,6 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         }
 
         Log.d(TAG, Helpers.LogLeaveMethod("GetCurrentAppEnvironmentSettings"));
-    }
-
-    public void SaveUserTenant(String tenantId)
-    {
-        Log.d(TAG, Helpers.LogEnterMethod("SaveUserTenant"));
-
-        SharedPreferences appPreferences = getSharedPreferences(Constants.PREFS_NAME, 0);
-        SharedPreferences.Editor editor = appPreferences.edit();
-        editor.putString(Constants.PreferenceKeys.UserTenant, tenantId);
-        editor.commit();
-
-        Log.d(TAG, Helpers.LogLeaveMethod("SaveUserTenant"));
-    }
-
-    public String GetUserTenant()
-    {
-        Log.d(TAG, Helpers.LogEnterMethod("GetUserTenant"));
-
-        SharedPreferences appPreferences = getSharedPreferences(Constants.PREFS_NAME, 0);
-        String userTenant = appPreferences.getString(Constants.PreferenceKeys.UserTenant, Constants.UserTenantDefault);
-
-        Log.d(TAG, Helpers.LogLeaveMethod("GetUserTenant"));
-        return userTenant;
-    }
-
-    public void SaveRefreshToken(String refreshToken)
-    {
-        Log.d(TAG, Helpers.LogEnterMethod("SaveRefreshToken"));
-
-        SharedPreferences appPreferences = getSharedPreferences(Constants.PREFS_NAME, 0);
-        SharedPreferences.Editor editor = appPreferences.edit();
-        editor.putString(Constants.PreferenceKeys.RefreshToken, refreshToken);
-        editor.commit();
-
-        Log.d(TAG, Helpers.LogLeaveMethod("SaveRefreshToken"));
-    }
-
-    public String GetRefreshToken()
-    {
-        Log.d(TAG, Helpers.LogEnterMethod("GetRefreshToken"));
-
-        SharedPreferences appPreferences = getSharedPreferences(Constants.PREFS_NAME, 0);
-        String refreshToken = appPreferences.getString(Constants.PreferenceKeys.RefreshToken, "");
-
-        Log.d(TAG, Helpers.LogLeaveMethod("GetRefreshToken"));
-        return refreshToken;
     }
 
     @Override
@@ -193,7 +147,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         SignOn(true);
 
         // Create the notification alarm for sending event reminders as notifications
-        mNotificationAlarm = new NotificationAlarm(getApplicationContext());
+        if(mNotificationAlarm == null) {
+            mNotificationAlarm = new NotificationAlarm(getApplicationContext());
+        }
 
         Toast.makeText(getApplicationContext(), "Welcome. Let's get busy!", Toast.LENGTH_SHORT).show();
 
@@ -217,10 +173,15 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         }
         // Ask for token and provide callback
         try {
-            mAuthority = mAppEnvironment[mAppEnvIndex].getAuthority() + GetUserTenant();
+            String userTenant = Helpers.getPreferenceValue(
+                    Constants.PreferenceKeys.UserTenant,
+                    Constants.UserTenantDefault,
+                    getApplicationContext()
+            );
+            String authority = mAppEnvironment[mAppEnvIndex].getAuthority() + userTenant;
             mAuthContext = new AuthenticationContext(
                     MainActivity.this,
-                    mAuthority,
+                    authority,
                     false); // use built in cache
                     //InMemoryCacheStore.getInstance());
 
@@ -259,8 +220,15 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                                     mCurrentAuthenticationResult = result;
                                     mCurrentUser = mCurrentAuthenticationResult.getUserInfo();
 
-                                    SaveRefreshToken(mCurrentAuthenticationResult.getRefreshToken());
-                                    SaveUserTenant(result.getTenantId());
+                                    Helpers.savePreferenceValue(
+                                            Constants.PreferenceKeys.RefreshToken,
+                                            mCurrentAuthenticationResult.getRefreshToken(),
+                                            getApplicationContext());
+
+                                    Helpers.savePreferenceValue(
+                                            Constants.PreferenceKeys.UserTenant,
+                                            mCurrentAuthenticationResult.getTenantId(),
+                                            getApplicationContext());
 
                                     getEvents = true;
 
@@ -331,22 +299,22 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogLeaveMethod("SignOut"));
     }
 
-    private boolean RefreshToken()
+    private boolean RefreshAccessToken()
     {
-        Log.d(TAG, Helpers.LogEnterMethod("RefreshToken"));
+        Log.d(TAG, Helpers.LogEnterMethod("RefreshAccessToken"));
 
-        if(mCurrentUser == null) {
-            Log.d(TAG, Helpers.LogInMethod("RefreshToken") + "::mCurrentUser == null");
+        if(mAuthContext == null) {
+            Log.d(TAG, Helpers.LogLeaveMethod("RefreshAccessToken") + "::mAuthContext == null");
             return false;
         }
 
-        GetCurrentAppEnvironmentSettings();
+        if(mCurrentUser == null) {
+            Log.d(TAG, Helpers.LogLeaveMethod("RefreshAccessToken") + "::mCurrentUser == null");
+            return false;
+        }
+
         try {
-            mAuthContext = new AuthenticationContext(
-                    MainActivity.this,
-                    mAuthority,
-                    false);
-                    //InMemoryCacheStore.getInstance());
+            GetCurrentAppEnvironmentSettings();
 
             mCurrentAuthenticationResult = mAuthContext.acquireTokenSilentSync(
                     mAppEnvironment[mAppEnvIndex].getResourceExchange(),
@@ -354,16 +322,23 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                     mCurrentUser.getUserId()
                     );
 
-            return true;
+            if(mCurrentAuthenticationResult.getStatus() == AuthenticationResult.AuthenticationStatus.Succeeded) {
+                Log.d(TAG, Helpers.LogInMethod("RefreshAccessToken") + "::Got a new token");
+                return true;
+            }
+            else {
+                Log.d(TAG, Helpers.LogInMethod("RefreshAccessToken") + "::Failed getting a new token");
+                return false;
+            }
 
         } catch (Exception e) {
-            Log.d(TAG, Helpers.LogInMethod("RefreshToken") + "::Exception", e);
+            Log.d(TAG, Helpers.LogInMethod("RefreshAccessToken") + "::Exception", e);
 
             SimpleAlertDialog.showAlertDialog(getApplicationContext(), "Exception caught refreshing tokens", e.getMessage());
             return false;
         }
         finally {
-            Log.d(TAG, Helpers.LogLeaveMethod("RefreshToken"));
+            Log.d(TAG, Helpers.LogLeaveMethod("RefreshAccessToken"));
         }
     }
 
@@ -533,8 +508,8 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     {
         Log.d(TAG, Helpers.LogEnterMethod("sendEmail"));
 
-        if(!RefreshToken()) {
-            Log.d(TAG, Helpers.LogInMethod("sendEmail") + "::No New AccessToken. Re-signon");
+        if(!RefreshAccessToken()) {
+            Log.d(TAG, Helpers.LogInMethod("sendEmail") + "::No new AccessToken. Re-signon");
             SignOn(false);
 
             Log.d(TAG, Helpers.LogLeaveMethod("sendEmail"));
@@ -586,7 +561,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     {
         Log.d(TAG, Helpers.LogEnterMethod("getAllEvents"));
 
-        if(!RefreshToken()) {
+        if(!RefreshAccessToken()) {
             Log.d(TAG, Helpers.LogInMethod("getAllEvents") + "::No New AccessToken. Re-signon");
             SignOn(false);
 
@@ -595,10 +570,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         }
 
         ArrayList<Item> eventsList;
-        if(!requery
-                && mEventsItems != null
-                && !(mEventsItems.isEmpty())
-                ) {
+        if(!requery &&
+                mEventsItems != null &&
+                !(mEventsItems.isEmpty())) {
             Log.d(TAG, Helpers.LogInMethod("getAllEvents") + "::Re-using mEventsItems" );
             eventsList = mEventsItems;
         } else {
@@ -646,20 +620,20 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
 
         if(eventSpan.equals("next7days")) {
 
-            eventsQuery = Helpers.GetEventsQueryString(
+            eventsQuery = Helpers.getEventsQueryString(
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
                     EventTimeSpan.NextSevenDays,
                     doNotShowPastEvents);
 
         } else if (eventSpan.equals("next30days")) { /// month
 
-            eventsQuery = Helpers.GetEventsQueryString(
+            eventsQuery = Helpers.getEventsQueryString(
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
                     EventTimeSpan.NextThirtyDays,
                     doNotShowPastEvents);
         } else {
 
-            eventsQuery = Helpers.GetEventsQueryString(
+            eventsQuery = Helpers.getEventsQueryString(
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
                     EventTimeSpan.Today,
                     doNotShowPastEvents);
@@ -700,7 +674,6 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             dialog.dismiss();
             mEventsAdapter.setItemList(result);
             mEventsAdapter.notifyDataSetChanged();
-            mNotificationAlarm.startAlarmForEventNotifications();
 
             Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::onPostExecute");
         }
@@ -784,6 +757,8 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                 // write event items to cache
                 EventsCache.write(items, getApplicationContext());
 
+                mNotificationAlarm.startAlarmForEventNotifications();
+
                 Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::doInBackground");
                 return items;
 
@@ -804,17 +779,15 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         }
     }
 
-
     private void doNullChecks()
     {
         Helpers.LogIfNull(TAG, mAuthContext, "mAuthContext");
         Helpers.LogIfNull(TAG, mCurrentAuthenticationResult, "mCurrentAuthenticationResult");
-        Helpers.LogIfNull(TAG, mAuthority, "mAuthority");
         Helpers.LogIfNull(TAG, mCurrentUser, "mCurrentUser");
-        Helpers.LogIfNull(TAG, mNotificationAlarm, "mNotificationAlarm");
         Helpers.LogIfNull(TAG, mEventsAdapter, "mEventsAdapter");
         Helpers.LogIfNull(TAG, mEventsItems, "mEventsItems");
         Helpers.LogIfNull(TAG, mMenu, "mMenu");
+        Helpers.LogIfNull(TAG, mNotificationAlarm, "mNotificationAlarm");
     }
 
     @Override

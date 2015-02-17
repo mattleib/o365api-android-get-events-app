@@ -54,13 +54,9 @@ public class LocalDateTimeConverter {
         SimpleDateFormat sdf = new SimpleDateFormat("EEEE");
 
         Calendar c = Calendar.getInstance();
-        c.setTimeInMillis(this.mLocalTime.toMillis(false));
+        c.set(mLocalTime.year, mLocalTime.month, mLocalTime.monthDay);
         String dayOfTheWeek = sdf.format(c.getTime());
 
-        //Date d = new Date();
-        //d.setTime(mLocalTime.toMillis(false));
-        //String dayOfTheWeek = sdf.format(d);
         return dayOfTheWeek;
     }
-
 }
