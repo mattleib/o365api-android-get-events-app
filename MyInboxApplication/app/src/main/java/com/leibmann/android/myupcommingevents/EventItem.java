@@ -1,5 +1,7 @@
 package com.leibmann.android.myupcommingevents;
 
+import android.text.format.Time;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -32,105 +34,121 @@ public class EventItem implements Serializable, Item {
         return Subject;
     }
 
-    public void setSubject(String subject) {
-        Subject = subject;
-    }
-
-    public String getBodyPreview() {
-        return BodyPreview;
-    }
-
-    public void setBodyPreview(String bodyPreview) {
-        BodyPreview = bodyPreview;
-    }
-
     public String getStart() {
         return Start;
-    }
-
-    public void setStart(String start) {
-        Start = start;
     }
 
     public String getEnd() {
         return End;
     }
 
-    public void setEnd(String end) {
-        End = end;
-    }
-
-    public String getType() {
-        return Type;
-    }
-
-    public void setType(String type) {
-        Type = type;
-    }
-
     public com.leibmann.android.myupcommingevents.Organizer getOrganizer() {
         return Organizer;
-    }
-
-    public void setOrganizer(com.leibmann.android.myupcommingevents.Organizer organizer) {
-        Organizer = organizer;
     }
 
     public com.leibmann.android.myupcommingevents.Location getLocation() {
         return Location;
     }
 
-    public void setLocation(com.leibmann.android.myupcommingevents.Location location) {
-        Location = location;
-    }
-
     public Boolean getIsAllDay() {
         return IsAllDay;
-    }
-
-    public void setIsAllDay(Boolean isAllDay) {
-        IsAllDay = isAllDay;
     }
 
     public Boolean getIsCancelled() {
         return IsCancelled;
     }
 
-    public void setIsCancelled(Boolean isCancelled) {
-        IsCancelled = isCancelled;
-    }
-
     public String getImportance() {
         return Importance;
-    }
-
-    public void setImportance(String importance) {
-        Importance = importance;
     }
 
     public String getShowAs() {
         return ShowAs;
     }
 
-    public void setShowAs(String showAs) {
-        ShowAs = showAs;
+    public boolean startsIn15Minutes()
+    {
+        if(IsAllDay || IsCancelled) {
+            return false;
+        }
+
+        //RFC3339
+        //"Start": "2015-01-23T20:00:00Z",
+        //"End": "2015-01-23T21:00:00Z",
+        Time startTime = new Time();
+        startTime.parse3339(Start);
+        long startTimeMilli = startTime.toMillis(false);
+        startTimeMilli = startTimeMilli - (Constants.OneMinuteInMilliseconds * 15);
+        startTime.set(startTimeMilli);
+
+        Time endTime = new Time();
+        endTime.parse3339(End);
+
+        Time now = new Time();
+        now.setToNow();
+
+        if(startTime.toMillis(true) <= now.toMillis(true) &&
+            now.toMillis(true) <= endTime.toMillis(true)) {
+            return true;
+        }
+
+        return false;
     }
 
-    public EventItem(String subject, String bodyPreview, String start, String end, String type, com.leibmann.android.myupcommingevents.Organizer organizer, com.leibmann.android.myupcommingevents.Location location, Boolean isAllDay, Boolean isCancelled, String importance, String showAs) {
-        Subject = subject;
-        BodyPreview = bodyPreview;
-        Start = start;
-        End = end;
-        Type = type;
-        Organizer = organizer;
-        Location = location;
-        IsAllDay = isAllDay;
-        IsCancelled = isCancelled;
-        Importance = importance;
-        ShowAs = showAs;
+    public boolean isNow()
+    {
+        if(IsAllDay || IsCancelled) {
+            return false;
+        }
+
+        //RFC3339
+        //"Start": "2015-01-23T20:00:00Z",
+        //"End": "2015-01-23T21:00:00Z",
+        Time startTime = new Time();
+        startTime.parse3339(Start);
+        long startTimeMilli = startTime.toMillis(false);
+        startTime.set(startTimeMilli);
+
+        Time endTime = new Time();
+        endTime.parse3339(End);
+
+        Time now = new Time();
+        now.setToNow();
+
+        if(startTime.toMillis(true) <= now.toMillis(true) &&
+                now.toMillis(true) <= endTime.toMillis(true)) {
+            return true;
+        }
+
+        return false;
     }
 
-     public EventItem(JSONObject event) throws JSONException {
+    public boolean isUpcoming()
+    {
+        if(IsAllDay || IsCancelled) {
+            return false;
+        }
+
+        //RFC3339
+        //"Start": "2015-01-23T20:00:00Z",
+        //"End": "2015-01-23T21:00:00Z",
+        Time startTime = new Time();
+        startTime.parse3339(Start);
+        long startTimeMilli = startTime.toMillis(false);
+        startTime.set(startTimeMilli);
+
+        Time now = new Time();
+        now.setToNow();
+
+        if(startTime.toMillis(true) > now.toMillis(true)) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    public EventItem(JSONObject event) throws JSONException {
         Subject = Helpers.TryGetJSONValue(event, "Subject");
         BodyPreview = Helpers.TryGetJSONValue(event, "BodyPreview");
         Start = Helpers.TryGetJSONValue(event, "Start");

@@ -90,8 +90,8 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     private static int mAppEnvIndex = Constants.IDX_PROD;
     private static String mAuthority = ""; // remember the authority for this session
 
-    private static AlarmManager mAlarmManager = null; // Alarm manager for the event notification service
-    private static PendingIntent mPendingIntent = null; // pending intent for event notification receiver
+    // Alarm for event notifications
+    private static NotificationAlarm mNotificationAlarm = null;
 
     //
     // Set the current environment the app operates on
@@ -192,16 +192,8 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         //
         SignOn(true);
 
-        //
-        // Create Intent for Event Notifications Receiver
-        //
-        Intent intent = new Intent(MainActivity.this, NotificationAlarmReceiver.class);
-        mPendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
-
-        //
-        // Start alarm
-        //
-        startAlarmForEventNotifications();
+        // Create the notification alarm for sending event reminders as notifications
+        mNotificationAlarm = new NotificationAlarm(getApplicationContext());
 
         Toast.makeText(getApplicationContext(), "Welcome. Let's get busy!", Toast.LENGTH_SHORT).show();
 
@@ -391,7 +383,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
 
             if(preference.getDoNotifications().getHasChanged())
             {
-                startAlarmForEventNotifications();
+                mNotificationAlarm.startAlarmForEventNotifications();
             }
 
             if(preference.getUsePPE().getHasChanged()) {
@@ -622,7 +614,6 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         ListView listView = (ListView) findViewById(R.id.eventItemList);
         listView.setAdapter(mEventsAdapter);
 
-
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
@@ -709,6 +700,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             dialog.dismiss();
             mEventsAdapter.setItemList(result);
             mEventsAdapter.notifyDataSetChanged();
+            mNotificationAlarm.startAlarmForEventNotifications();
 
             Log.d(TAG, Helpers.LogLeaveMethod("GetContactsListAsync") + "::onPostExecute");
         }
@@ -819,6 +811,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Helpers.LogIfNull(TAG, mCurrentAuthenticationResult, "mCurrentAuthenticationResult");
         Helpers.LogIfNull(TAG, mAuthority, "mAuthority");
         Helpers.LogIfNull(TAG, mCurrentUser, "mCurrentUser");
+        Helpers.LogIfNull(TAG, mNotificationAlarm, "mNotificationAlarm");
         Helpers.LogIfNull(TAG, mEventsAdapter, "mEventsAdapter");
         Helpers.LogIfNull(TAG, mEventsItems, "mEventsItems");
         Helpers.LogIfNull(TAG, mMenu, "mMenu");
@@ -835,42 +828,6 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogLeaveMethod("onResume"));
     }
 
-    private void startAlarmForEventNotifications(){
-        Log.d(TAG, Helpers.LogEnterMethod("startAlarmForEventNotifications"));
-
-        // First cancel the old alarm
-        cancelAlarmForEventNotifications();
-
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean doNotifications = sharedPreferences.getBoolean(Constants.PreferenceKeys.DoNotifications, true);
-
-        if(!doNotifications) {
-            Log.d(TAG, Helpers.LogLeaveMethod("startAlarmForEventNotifications") + "::Notifications turned off");
-            return;
-        }
-
-        // Start a new alarm in 30 seconds to allow boot up time
-        Calendar c = Calendar.getInstance();
-        c.add(Calendar.SECOND, 30);
-        long firstTime = c.getTimeInMillis();
-
-        // Repeat every 10 minutes, but don't wake-up device
-        mAlarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
-        mAlarmManager.setInexactRepeating(
-                AlarmManager.RTC,
-                firstTime,
-                (Constants.OneMinuteInMilliseconds*10),
-                mPendingIntent);
-
-        Log.d(TAG, Helpers.LogLeaveMethod("startAlarmForEventNotifications") + "::Alarm turned on");
-    }
-
-    private void cancelAlarmForEventNotifications() {
-        if(mAlarmManager != null) {
-            mAlarmManager.cancel(mPendingIntent);
-            mAlarmManager = null;
-        }
-    }
 
     @Override
     protected void onStart() {
@@ -894,7 +851,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     protected void onDestroy() {
         super.onDestroy();
         // The activity is about to be destroyed.
-        cancelAlarmForEventNotifications();
+        mNotificationAlarm.cancelAlarmForEventNotifications();
     }
 
 }

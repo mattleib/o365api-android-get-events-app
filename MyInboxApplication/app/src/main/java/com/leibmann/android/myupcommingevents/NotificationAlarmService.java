@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -22,7 +23,7 @@ public class NotificationAlarmService extends Service {
 
     private static NotificationManager mNotificationManager = null;
     private static final int NOTIFICATIONID = 001;
-    private static int mNumMessages = 0;
+    private int mNumMessages = 0;
 
     @Override
     public IBinder onBind(Intent arg0)
@@ -49,53 +50,56 @@ public class NotificationAlarmService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, Helpers.LogEnterMethod("onStartCommand"));
 
-        // Read event items from cache and display immediately
-        ArrayList<Item> items = EventsCache.read(getApplicationContext());
-        if(items == null) {
-            Log.d(TAG, Helpers.LogLeaveMethod("onStartCommand") + "::No events in cache");
+        Context context = getApplicationContext();
+
+        ArrayList<EventItem> events = Helpers.getAllEventsFromCache(context);
+        if(events.size() <= 0) {
+            Log.d(TAG, Helpers.LogLeaveMethod("onStartCommand") + "::No events");
             mNotificationManager.cancel(NOTIFICATIONID);
             return START_NOT_STICKY; // stop service after it's done the work
         }
 
-        Enumeration e = Collections.enumeration(items);
-        ArrayList<EventItem> upcomingEvents = new ArrayList<EventItem>();
+        mNumMessages = 0;
+        EventItem firstEvent = null;
+        Enumeration e = Collections.enumeration(events);
         while(e.hasMoreElements()) {
-            Item item = (Item)e.nextElement();
-            if(item.isItemType() == ItemType.Event) {
-                EventItem event = (EventItem) item;
-                if (Helpers.IsEventNow(event.getStart(), event.getEnd()) &&
-                        !event.IsAllDay &&
-                        !event.getIsCancelled()) {
-                    upcomingEvents.add(event);
+            EventItem event = (EventItem)e.nextElement();
+            {
+                if(event.startsIn15Minutes()) {
+                    if(firstEvent == null) {
+                        firstEvent = event;
+                    }
+                    mNumMessages++;
                 }
             }
         }
 
-        if(upcomingEvents.size() <= 0) {
-            Log.d(TAG, Helpers.LogLeaveMethod("onStartCommand") + "::No upcoming events");
-            mNotificationManager.cancel(NOTIFICATIONID);
-            return START_NOT_STICKY; // stop service after it's done the work
+        if(firstEvent != null) {
+            LocalDateTimeConverter startTime = new LocalDateTimeConverter(firstEvent.getStart());
+
+            String s = "Next: " + startTime.getLocalTimeString() + " " + firstEvent.Subject;
+
+            // Now we do the notification for the events ...
+            NotificationCompat.Builder mBuilder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(R.drawable.ic_event_24px)
+                            .setContentTitle("Office 365 Upcoming Events")
+                            .setContentText(s).setNumber(mNumMessages);
+
+            // Notification start MainActivity
+            Intent mainActivityIntent = new Intent(context, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mBuilder.setContentIntent(PendingIntent.getActivity(context, 0, intent, 0));
+
+            // Show on lockscreen
+            mBuilder.setVisibility(Notification.VISIBILITY_PUBLIC);
+
+            mNotificationManager.notify(NOTIFICATIONID, mBuilder.build());
         }
 
-        EventItem event = (EventItem) upcomingEvents.get(0);
-        LocalDateTimeConverter startTime = new LocalDateTimeConverter(event.getStart());
-
-        String s = "Up next: " + startTime.getLocalTimeString() + " " + event.Subject;
-
-        // Now we do the notification for the events ...
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.ic_event_24px)
-                        .setContentTitle("Office 365 Upcoming Events")
-                        .setContentText(s).setNumber(upcomingEvents.size());
-
-        // Q: !!! How do I pass the Pending Intent to go back to the apps MainActivity?
-        // mBuilder.setContentIntent(intent);
-
-        // Show on lockscreen
-        mBuilder.setVisibility(Notification.VISIBILITY_PUBLIC);
-
-        mNotificationManager.notify(NOTIFICATIONID, mBuilder.build());
+        // set the next alarm for next upcoming event...
+        NotificationAlarm notificationAlarm = new NotificationAlarm(context);
+        notificationAlarm.startAlarmForEventNotifications();
 
         Log.d(TAG, Helpers.LogLeaveMethod("onStartCommand"));
         return START_NOT_STICKY; // stop service after it's done the work

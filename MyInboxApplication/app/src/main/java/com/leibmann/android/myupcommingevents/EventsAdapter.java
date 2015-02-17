@@ -96,7 +96,7 @@ public class EventsAdapter extends ArrayAdapter<Item>
             }
 
             TextView subject = (TextView) v.findViewById(R.id.subject);
-            if(Helpers.IsEventNow(e.getStart(), e.getEnd()) && !e.IsAllDay) {
+            if(e.isNow()) {
                 // add a visual cue that the event is now
                 subject.setText(Constants.VisualCues.EventNow + e.getSubject());
             } else {

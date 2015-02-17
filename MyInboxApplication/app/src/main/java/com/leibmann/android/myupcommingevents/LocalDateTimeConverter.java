@@ -3,6 +3,7 @@ package com.leibmann.android.myupcommingevents;
 import android.text.format.Time;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -12,6 +13,10 @@ import java.util.TimeZone;
 public class LocalDateTimeConverter {
 
     private Time mLocalTime;
+
+    public Time getLocalTime() {
+        return mLocalTime;
+    }
 
     public LocalDateTimeConverter(String utcDateRFC3339) {
         // RFC3339
@@ -47,9 +52,14 @@ public class LocalDateTimeConverter {
 
     public String getLocalDayOfWeekString() {
         SimpleDateFormat sdf = new SimpleDateFormat("EEEE");
-        Date d = new Date();
-        d.setTime(mLocalTime.toMillis(false));
-        String dayOfTheWeek = sdf.format(d);
+
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(this.mLocalTime.toMillis(false));
+        String dayOfTheWeek = sdf.format(c.getTime());
+
+        //Date d = new Date();
+        //d.setTime(mLocalTime.toMillis(false));
+        //String dayOfTheWeek = sdf.format(d);
         return dayOfTheWeek;
     }
 

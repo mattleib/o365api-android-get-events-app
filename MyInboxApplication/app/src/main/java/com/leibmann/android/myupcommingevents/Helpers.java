@@ -1,13 +1,17 @@
 package com.leibmann.android.myupcommingevents;
 
+import android.content.Context;
 import android.text.format.Time;
 import android.util.Log;
 
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Enumeration;
 
 /**
  * Created by mattleib on 1/28/2015.
@@ -100,27 +104,42 @@ public class Helpers {
         return queryString;
     }
 
-    public static boolean IsEventNow(String startTimeUtc, String endTimeUtc) {
-        //RFC3339
-        //"Start": "2015-01-23T20:00:00Z",
-        //"End": "2015-01-23T21:00:00Z",
-        Time startTime = new Time();
-        startTime.parse3339(startTimeUtc);
-        long startTimeMilli = startTime.toMillis(false);
-        startTimeMilli = startTimeMilli - (Constants.OneMinuteInMilliseconds * 15); //Give 15 minute buffer
-        startTime.set(startTimeMilli);
-
-        Time endTime = new Time();
-        endTime.parse3339(endTimeUtc);
-
-        Time now = new Time();
-        now.setToNow();
-
-        if(startTime.toMillis(true) < now.toMillis(true) &&
-                now.toMillis(true) < endTime.toMillis(true)) {
-            return true;
+    public static ArrayList<EventItem> getUpcomingEventsFromCache(Context context) {
+        ArrayList<EventItem> upcomingEvents = new ArrayList<EventItem>();
+        ArrayList<Item> items = EventsCache.read(context);
+        if(items == null) {
+            return upcomingEvents;
         }
 
-        return false;
+        Enumeration e = Collections.enumeration(items);
+        while(e.hasMoreElements()) {
+            Item item = (Item)e.nextElement();
+            if(item.isItemType() == ItemType.Event) {
+                EventItem event = (EventItem) item;
+                if (event.isUpcoming()) {
+                    upcomingEvents.add(event);
+                }
+            }
+        }
+        return upcomingEvents;
     }
+
+    public static ArrayList<EventItem> getAllEventsFromCache(Context context) {
+        ArrayList<EventItem> events = new ArrayList<EventItem>();
+        ArrayList<Item> items = EventsCache.read(context);
+        if(items == null) {
+            return events;
+        }
+
+        Enumeration e = Collections.enumeration(items);
+        while(e.hasMoreElements()) {
+            Item item = (Item)e.nextElement();
+            if(item.isItemType() == ItemType.Event) {
+                EventItem event = (EventItem) item;
+                events.add(event);
+            }
+        }
+        return events;
+    }
+
 }
