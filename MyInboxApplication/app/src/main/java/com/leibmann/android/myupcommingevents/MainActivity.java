@@ -166,6 +166,8 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     {
         Log.d(TAG, Helpers.LogEnterMethod("SignOn"));
 
+        toggleLoginMenuAction(true);
+
         //
         // Read the current environment the app operates on
         //
@@ -247,7 +249,6 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                             {
                                 SimpleAlertDialog.showAlertDialog(MainActivity.this,
                                         "Failed to acquire token", "Authorization Server returned success code but no token");
-                                SignOut();
                             }
 
                             //
@@ -447,13 +448,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             startActivityForResult(new Intent(this, SettingsActivity.class), Constants.PICK_PREFERENCE_REQUEST);
         }
         else if (id == R.id.action_logout) {
-            item.setVisible(false);
-
             SignOut();
         }
         else if (id == R.id.action_login) {
-            item.setVisible(false);
-
             SignOn(true);
         }
 
