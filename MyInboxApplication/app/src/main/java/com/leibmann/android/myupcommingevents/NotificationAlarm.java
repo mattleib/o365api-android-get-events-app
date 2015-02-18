@@ -50,29 +50,33 @@ public class NotificationAlarm {
             return;
         }
 
-        EventItem event = (EventItem) upcomingEvents.get(0);
-        LocalDateTimeConverter startTime = new LocalDateTimeConverter(event.getStart());
-        long eventAlarmTime = startTime.getLocalTime().toMillis(false) - (Constants.OneMinuteInMilliseconds*15);
-
-        // BUGBUG: eventAlarmTime should be local time, but it is past, e.g. for PST it is 8 hours back.
-        // no idea why, this fixes it by adding UTC offset.
-        Calendar calEvent = Calendar.getInstance();
-        calEvent.setTimeInMillis(eventAlarmTime);
-        int zoneOffset = calEvent.get(Calendar.ZONE_OFFSET);
-        int dstOffset = calEvent.get(Calendar.DST_OFFSET);
-        calEvent.add(Calendar.MILLISECOND, -(zoneOffset + dstOffset));
-        long calEventTime = calEvent.getTimeInMillis();
-
         //Get time Now
         Calendar calNow = Calendar.getInstance();
-        calNow.add(Calendar.MINUTE, 1);
         long calNowTime = calNow.getTimeInMillis();
 
-        Calendar cal;
-        if(calNowTime > calEventTime) { // never schedule an alarm in the past.
-            cal = calNow;
-        } else {
-            cal = calEvent;
+        //Select the next upcoming event, do not take it if notification alarm time happened in the past
+        EventItem event;
+        Calendar cal = calNow;
+        for(int i=0; i<upcomingEvents.size(); i++) {
+            event = (EventItem) upcomingEvents.get(i);
+            LocalDateTimeConverter startTime = new LocalDateTimeConverter(event.getStart());
+            long eventAlarmTime = startTime.getLocalTime().toMillis(false) - (Constants.OneMinuteInMilliseconds*15);
+
+            // BUGBUG: eventAlarmTime should be local time, but it is past, e.g. for PST it is 8 hours back.
+            // no idea why, this fixes it by adding UTC offset.
+            Calendar calEvent = Calendar.getInstance();
+            calEvent.setTimeInMillis(eventAlarmTime);
+            int zoneOffset = calEvent.get(Calendar.ZONE_OFFSET);
+            int dstOffset = calEvent.get(Calendar.DST_OFFSET);
+            calEvent.add(Calendar.MILLISECOND, -(zoneOffset + dstOffset));
+            long calEventTime = calEvent.getTimeInMillis();
+
+            // never schedule an alarm in the past.
+            // this event was handled by a previous Alarm, se we need to get the next one
+            if(calEventTime >= calNowTime) {
+                cal = calEvent;
+                break;
+            }
         }
 
         SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

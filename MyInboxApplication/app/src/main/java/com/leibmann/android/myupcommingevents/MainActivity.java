@@ -95,9 +95,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     private static PendingIntent mPendingIntent = null;
 
     //
-    // Set the current environment the app operates on
+    // Set the current environment the app operates on (PROD, PPE)
     //
-    private void GetCurrentAppEnvironmentSettings()
+    private void getCurrentAppEnvironmentSettings()
     {
         Log.d(TAG, Helpers.LogEnterMethod("GetCurrentAppEnvironmentSettings"));
 
@@ -145,9 +145,11 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         //
         // Login, Get AccessToken, and Pre-fill the EventList
         //
-        SignOn(true);
+        signOn(true);
 
+        //
         // Create the notification alarm for sending event reminders as notifications
+        //
         if(mNotificationAlarm == null) {
             mNotificationAlarm = new NotificationAlarm(MainActivity.this);
         }
@@ -162,7 +164,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogLeaveMethod("onCreate"));
     }
 
-    private void SignOn(boolean showProgressDialog)
+    private void signOn(boolean showProgressDialog)
     {
         Log.d(TAG, Helpers.LogEnterMethod("SignOn"));
 
@@ -171,7 +173,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         //
         // Read the current environment the app operates on
         //
-        GetCurrentAppEnvironmentSettings();
+        getCurrentAppEnvironmentSettings();
 
         final ProgressDialog mLoginProgressDialog = new ProgressDialog(this);
         if(showProgressDialog) {
@@ -285,7 +287,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogLeaveMethod("toggleLoginMenuAction"));
     }
 
-    private void SignOut()
+    private void signOut()
     {
         Log.d(TAG, Helpers.LogEnterMethod("SignOut"));
 
@@ -306,7 +308,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogLeaveMethod("SignOut"));
     }
 
-    private boolean RefreshAccessToken()
+    private boolean refreshAccessToken()
     {
         Log.d(TAG, Helpers.LogEnterMethod("RefreshAccessToken"));
 
@@ -321,7 +323,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         }
 
         try {
-            GetCurrentAppEnvironmentSettings();
+            getCurrentAppEnvironmentSettings();
 
             mCurrentAuthenticationResult = mAuthContext.acquireTokenSilentSync(
                     mAppEnvironment[mAppEnvIndex].getResourceExchange(),
@@ -375,7 +377,11 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                     mAppEnvIndex = Constants.IDX_PROD;
                 }
 
-                SignOut();
+                // Reset to use common endpoint
+                Helpers.savePreferenceValue(Constants.PreferenceKeys.UserTenant,
+                        Constants.UserTenantDefault, getApplicationContext());
+
+                signOut();
 
                 Log.d(TAG, Helpers.LogLeaveMethod("onActivityResult"));
                 return;
@@ -448,10 +454,10 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             startActivityForResult(new Intent(this, SettingsActivity.class), Constants.PICK_PREFERENCE_REQUEST);
         }
         else if (id == R.id.action_logout) {
-            SignOut();
+            signOut();
         }
         else if (id == R.id.action_login) {
-            SignOn(true);
+            signOn(true);
         }
 
         Log.d(TAG, Helpers.LogLeaveMethod("onOptionsItemSelected"));
@@ -484,7 +490,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         return e;
     }
 
-    private class SendEmailAsync extends AsyncTask<String, Void, Void> {
+    private class sendEmailAsync extends AsyncTask<String, Void, Void> {
 
         protected Void doInBackground(String... params) {
             try {
@@ -511,9 +517,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     {
         Log.d(TAG, Helpers.LogEnterMethod("sendEmail"));
 
-        if(!RefreshAccessToken()) {
+        if(!refreshAccessToken()) {
             Log.d(TAG, Helpers.LogInMethod("sendEmail") + "::No new AccessToken. Re-signon");
-            SignOn(false);
+            signOn(false);
 
             Log.d(TAG, Helpers.LogLeaveMethod("sendEmail"));
             return;
@@ -538,7 +544,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         subject = subject + eventItem.getSubject();
 
 
-        new SendEmailAsync().execute(
+        new sendEmailAsync().execute(
                 mAppEnvironment[mAppEnvIndex].getSendEmailUri(),
                 subject,
                 body,
@@ -564,9 +570,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     {
         Log.d(TAG, Helpers.LogEnterMethod("getAllEvents"));
 
-        if(!RefreshAccessToken()) {
+        if(!refreshAccessToken()) {
             Log.d(TAG, Helpers.LogInMethod("getAllEvents") + "::No New AccessToken. Re-signon");
-            SignOn(false);
+            signOn(false);
 
             Log.d(TAG, Helpers.LogLeaveMethod("getAllEvents"));
             return;
@@ -652,7 +658,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         //
         // Exec async load task to get Events from Office 365
         //
-        (new GetContactsListAsync()).execute(
+        (new getContactsListAsync()).execute(
                 eventsQuery,
                 mCurrentAuthenticationResult.getAccessToken()
                 );
@@ -663,7 +669,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     //
     // Load Events in Background
     //
-    public class GetContactsListAsync extends AsyncTask<String, Void, ArrayList<Item>> {
+    public class getContactsListAsync extends AsyncTask<String, Void, ArrayList<Item>> {
 
         private final ProgressDialog dialog = new ProgressDialog(MainActivity.this);
         private String mLastSectionDate = "ForceDisplay";

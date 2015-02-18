@@ -99,7 +99,11 @@ public class NotificationAlarmService extends Service {
 
             // Notification start MainActivity
             Intent mainActivityIntent = new Intent(context, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
+                            Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT |
+                            Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setAction(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_LAUNCHER);
             mBuilder.setContentIntent(PendingIntent.getActivity(context, 0, intent, 0));
 
             // Show on lockscreen
