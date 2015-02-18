@@ -821,6 +821,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogEnterMethod("onResume"));
 
         doNullChecks();
+        getAllEvents(false);
 
         Log.d(TAG, Helpers.LogLeaveMethod("onResume"));
     }

@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -20,10 +21,7 @@ import java.util.Enumeration;
 public class NotificationAlarmService extends Service {
 
     private final static String TAG = "NotificationAlarmService";
-
-    private static NotificationManager mNotificationManager = null;
-    private static final int NOTIFICATIONID = 001;
-    private int mNumMessages = 0;
+    private final static int NOTIFICATIONID = 001;
 
     @Override
     public IBinder onBind(Intent arg0)
@@ -36,7 +34,7 @@ public class NotificationAlarmService extends Service {
     public void onCreate()
     {
         super.onCreate();
-        mNotificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+
     }
 
     @Override
@@ -50,26 +48,27 @@ public class NotificationAlarmService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, Helpers.LogEnterMethod("onStartCommand"));
 
+        NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         Context context = getApplicationContext();
 
         ArrayList<EventItem> events = Helpers.getAllEventsFromCache(context);
         if(events.size() <= 0) {
             Log.d(TAG, Helpers.LogLeaveMethod("onStartCommand") + "::No events");
-            mNotificationManager.cancel(NOTIFICATIONID);
+            notificationManager.cancel(NOTIFICATIONID);
             return START_NOT_STICKY; // stop service after it's done the work
         }
 
-        mNumMessages = 0;
+        int numMessages = 0;
         EventItem firstEvent = null;
         Enumeration e = Collections.enumeration(events);
         while(e.hasMoreElements()) {
             EventItem event = (EventItem)e.nextElement();
             {
                 if(event.startsIn15Minutes()) {
-                    if(firstEvent == null) {
+                    //if(firstEvent == null) {
                         firstEvent = event;
-                    }
-                    mNumMessages++;
+                    //}
+                    numMessages++;
                 }
             }
         }
@@ -93,23 +92,35 @@ public class NotificationAlarmService extends Service {
                     new NotificationCompat.Builder(this)
                             .setSmallIcon(R.drawable.ic_event_24px)
                             .setContentTitle("Office 365 Upcoming Events")
-                            .setContentText(s).setNumber(mNumMessages)
+                            .setContentText(s).setNumber(numMessages)
                             .setStyle(new NotificationCompat.BigTextStyle()
                             .bigText(msg));
 
             // Notification start MainActivity
+            /*
             Intent mainActivityIntent = new Intent(context, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
-                            Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT |
-                            Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.setAction(Intent.ACTION_MAIN);
-            intent.addCategory(Intent.CATEGORY_LAUNCHER);
-            mBuilder.setContentIntent(PendingIntent.getActivity(context, 0, intent, 0));
+            TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+            stackBuilder.addParentStack(MainActivity.class);
+            stackBuilder.addNextIntent(mainActivityIntent);
+            PendingIntent resultPendingIntent =
+                    stackBuilder.getPendingIntent(
+                            0,
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                    );
+            mBuilder.setContentIntent(resultPendingIntent);
+            */
+            Intent mainActivityIntent = new Intent(context, MainActivity.class);
+            mainActivityIntent.addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK |
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            mainActivityIntent.setAction(Intent.ACTION_MAIN);
+            mainActivityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+            mBuilder.setContentIntent(PendingIntent.getActivity(context, 0, mainActivityIntent, 0));
 
             // Show on lockscreen
             mBuilder.setVisibility(Notification.VISIBILITY_PUBLIC);
 
-            mNotificationManager.notify(NOTIFICATIONID, mBuilder.build());
+            notificationManager.notify(NOTIFICATIONID, mBuilder.build());
         }
 
         // set the next alarm for next upcoming event...
