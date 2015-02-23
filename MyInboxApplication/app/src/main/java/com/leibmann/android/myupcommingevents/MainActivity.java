@@ -1,3 +1,5 @@
+//Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. See full license at the bottom of this file.
+//
 package com.leibmann.android.myupcommingevents;
 
 import android.app.AlarmManager;
@@ -19,6 +21,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -159,7 +163,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             mPendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
         }
 
-        Toast.makeText(getApplicationContext(), "Welcome. Let's get busy!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, "Welcome. Let's get busy!", Toast.LENGTH_SHORT).show();
 
         Log.d(TAG, Helpers.LogLeaveMethod("onCreate"));
     }
@@ -186,13 +190,13 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             String userTenant = Helpers.getPreferenceValue(
                     Constants.PreferenceKeys.UserTenant,
                     Constants.UserTenantDefault,
-                    getApplicationContext()
+                    MainActivity.this
             );
             String authority = mAppEnvironment[mAppEnvIndex].getAuthority() + userTenant;
             mAuthContext = new AuthenticationContext(
                     MainActivity.this,
                     authority,
-                    false); // use built in cache
+                    false);
                     //InMemoryCacheStore.getInstance());
 
             mAuthContext.acquireToken(
@@ -213,7 +217,10 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                                 mLoginProgressDialog.dismiss();
                             }
                             SimpleAlertDialog.showAlertDialog(MainActivity.this,
-                                    "Authorization Server returned a failure", exc.getMessage());
+                                    "Failed to acquire token",
+                                    "Authorization Server returned a failure" + exc.getMessage());
+
+                            signOut();
                         }
 
                         @Override
@@ -233,24 +240,30 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                                     Helpers.savePreferenceValue(
                                             Constants.PreferenceKeys.RefreshToken,
                                             mCurrentAuthenticationResult.getRefreshToken(),
-                                            getApplicationContext());
+                                            MainActivity.this);
 
                                     Helpers.savePreferenceValue(
                                             Constants.PreferenceKeys.UserTenant,
                                             mCurrentAuthenticationResult.getTenantId(),
-                                            getApplicationContext());
+                                            MainActivity.this);
 
                                     getEvents = true;
 
                                 } else {
                                     SimpleAlertDialog.showAlertDialog(MainActivity.this,
-                                            "Failed to acquire token", "Authorization Server returned success code but no result");
+                                            "Failed to acquire token",
+                                            "Authorization Server returned success code but no result");
+
+                                    signOut();
                                 }
                             }
                             catch(Exception e)
                             {
                                 SimpleAlertDialog.showAlertDialog(MainActivity.this,
-                                        "Failed to acquire token", "Authorization Server returned success code but no token");
+                                        "Failed to acquire token",
+                                        "Authorization Server returned success code but no token");
+
+                                signOut();
                             }
 
                             //
@@ -265,7 +278,11 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         } catch (Exception e) {
             Log.d(TAG, Helpers.LogInMethod("SignOn") + "::Exception", e);
 
-            SimpleAlertDialog.showAlertDialog(getApplicationContext(), "Exception caught", e.getMessage());
+            SimpleAlertDialog.showAlertDialog(MainActivity.this,
+                    "Failed to acquire token",
+                    "Exception caught" + e.getMessage());
+
+            signOut();
         }
         finally {
             Log.d(TAG, Helpers.LogLeaveMethod("SignOn"));
@@ -292,9 +309,14 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogEnterMethod("SignOut"));
 
         if (mAuthContext != null) {
+            CookieSyncManager.createInstance(MainActivity.this);
+            CookieManager cookieManager = CookieManager.getInstance();
+            cookieManager.removeAllCookie();
+            CookieSyncManager.getInstance().sync();
             mAuthContext.getCache().removeAll();
             mAuthContext = null;
             mCurrentAuthenticationResult = null;
+            mCurrentUser = null;
         }
 
         if(mEventsAdapter != null) {
@@ -304,6 +326,13 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         }
 
         toggleLoginMenuAction(true);
+
+        //Reset to common
+        Helpers.savePreferenceValue(Constants.PreferenceKeys.UserTenant,
+                Constants.UserTenantDefault, MainActivity.this);
+
+        //Cancel all Alarms
+        cancelAlarms();
 
         Log.d(TAG, Helpers.LogLeaveMethod("SignOut"));
     }
@@ -335,15 +364,25 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                 Log.d(TAG, Helpers.LogInMethod("RefreshAccessToken") + "::Got a new token");
                 return true;
             }
-            else {
-                Log.d(TAG, Helpers.LogInMethod("RefreshAccessToken") + "::Failed getting a new token");
-                return false;
-            }
+
+            SimpleAlertDialog.showAlertDialog(MainActivity.this,
+                    "Failed to acquire token",
+                    "Could not get a new access tokens. Please Login again.");
+
+            signOut();
+
+            Log.d(TAG, Helpers.LogInMethod("RefreshAccessToken") + "::Failed getting a new token");
+            return false;
 
         } catch (Exception e) {
             Log.d(TAG, Helpers.LogInMethod("RefreshAccessToken") + "::Exception", e);
 
-            SimpleAlertDialog.showAlertDialog(getApplicationContext(), "Exception caught refreshing tokens", e.getMessage());
+            SimpleAlertDialog.showAlertDialog(MainActivity.this,
+                    "Failed to acquire token",
+                    "Could not get a new access tokens. Please Login again." + e.getMessage());
+
+            signOut();
+
             return false;
         }
         finally {
@@ -377,10 +416,10 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                     mAppEnvIndex = Constants.IDX_PROD;
                 }
 
-                // Reset to use common endpoint
-                Helpers.savePreferenceValue(Constants.PreferenceKeys.UserTenant,
-                        Constants.UserTenantDefault, getApplicationContext());
+                // clear the events cache
+                EventsCache.write(new ArrayList<Item>(), MainActivity.this);
 
+                //sign out
                 signOut();
 
                 Log.d(TAG, Helpers.LogLeaveMethod("onActivityResult"));
@@ -518,10 +557,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogEnterMethod("sendEmail"));
 
         if(!refreshAccessToken()) {
-            Log.d(TAG, Helpers.LogInMethod("sendEmail") + "::No new AccessToken. Re-signon");
-            signOn(false);
-
-            Log.d(TAG, Helpers.LogLeaveMethod("sendEmail"));
+            Log.d(TAG, Helpers.LogLeaveMethod("sendEmail") + "::No new AccessToken. Re-signon");
             return;
         }
 
@@ -533,16 +569,14 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         String subject = "";
         String body = "";
         if(emailType == EmailInfoType.RunningLate) {
-            subject = "Running late: ";
-            body = "I'll be a bit late, but I'm on my way for ";
-            body = body + "(" + eventItem.getSubject() + ") at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ". See you soon.";
+            subject = "Running late: " + eventItem.getSubject();
+            body = "I'll be a bit late, but I'm on my way for the meeting ";
+            body = body + "'" + eventItem.getSubject() + "' at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ". See you soon.";
         } else {
-            subject = "Cannot make the meeting: ";
+            subject = "Cannot make the meeting: " + eventItem.getSubject();
             body = "Sorry, I can't make it to the meeting ";
-            body = body + "(" + eventItem.getSubject() + ") at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ".";
+            body = body + "'" + eventItem.getSubject() + "' at " + startTime.getLocalTimeString() + " on " + startTime.getLocalDayString() + ".";
         }
-        subject = subject + eventItem.getSubject();
-
 
         new sendEmailAsync().execute(
                 mAppEnvironment[mAppEnvIndex].getSendEmailUri(),
@@ -557,7 +591,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                 eventItem.getOrganizer().getEmailAddress().getAddress() :
                 eventItem.getOrganizer().getEmailAddress().getName();
 
-        Toast.makeText(getApplicationContext(), "Email sent to " + name, Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, "Email sent to " + name, Toast.LENGTH_SHORT).show();
 
         Log.d(TAG, Helpers.LogLeaveMethod("sendEmail"));
     }
@@ -570,30 +604,11 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     {
         Log.d(TAG, Helpers.LogEnterMethod("getAllEvents"));
 
-        if(!refreshAccessToken()) {
-            Log.d(TAG, Helpers.LogInMethod("getAllEvents") + "::No New AccessToken. Re-signon");
-            signOn(false);
-
-            Log.d(TAG, Helpers.LogLeaveMethod("getAllEvents"));
-            return;
-        }
-
-        ArrayList<Item> eventsList;
-        if(!requery &&
-                mEventsItems != null &&
-                !(mEventsItems.isEmpty())) {
-            Log.d(TAG, Helpers.LogInMethod("getAllEvents") + "::Re-using mEventsItems" );
-            eventsList = mEventsItems;
-        } else {
-            Log.d(TAG, Helpers.LogInMethod("getAllEvents") + "::Need to fetch new event items" );
-            eventsList = new ArrayList<Item>();
-            requery = true;
-        }
-
         //
-        // Get events and fill the list
+        // Get new events and fill the list
         //
-        mEventsAdapter = new EventsAdapter(eventsList, getApplicationContext());
+        ArrayList<Item> eventsList = new ArrayList<Item>();
+        mEventsAdapter = new EventsAdapter(eventsList, MainActivity.this);
         ListView listView = (ListView) findViewById(R.id.eventItemList);
         listView.setAdapter(mEventsAdapter);
 
@@ -601,21 +616,34 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
-                Toast.makeText(getApplicationContext(),
+                Toast.makeText(MainActivity.this,
                         "Refresh display", Toast.LENGTH_SHORT)
                         .show();
                 getAllEvents(false);
             }
         });
 
-        //
-        // Only force a refresh of the current screen,
-        // but don't request new events from Office 365
-        //
-        if(!requery) {
+        // Read event items from cache and display immediately
+        eventsList = EventsCache.read(MainActivity.this);
+        if(eventsList != null && !eventsList.isEmpty()) {
+            mEventsItems = eventsList;
+            mEventsAdapter.setItemList(eventsList);
             mEventsAdapter.notifyDataSetChanged();
+            Log.d(TAG, Helpers.LogInMethod("getAllEvents") + "::Notified Adapter to refresh");
+        }
 
-            Log.d(TAG, Helpers.LogLeaveMethod("getAllEvents") + "::Notified Adapter to refresh");
+        if(mEventsItems != null) {
+            if (requery || mEventsItems.isEmpty()) {
+                Log.d(TAG, Helpers.LogInMethod("getAllEvents") + "::Need to fetch new event items");
+            } else {
+                Log.d(TAG, Helpers.LogLeaveMethod("getAllEvents") + "::Working from the cache. No requery.");
+                return;
+            }
+        }
+
+        // Get a fresh access token
+        if(!refreshAccessToken()) {
+            Log.d(TAG, Helpers.LogLeaveMethod("getAllEvents") + "::No New AccessToken. Re-signon");
             return;
         }
 
@@ -646,13 +674,6 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                     mAppEnvironment[mAppEnvIndex].getEventsQueryTemplate(),
                     EventTimeSpan.Today,
                     doNotShowPastEvents);
-        }
-
-        // Read event items from cache and display immediately
-        ArrayList<Item> items = EventsCache.read(getApplicationContext());
-        if(items != null) {
-            mEventsAdapter.setItemList(items);
-            mEventsAdapter.notifyDataSetChanged();
         }
 
         //
@@ -737,7 +758,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                 }
 
                 // get another batch of 50
-                apiOutput = Office365API.getRequestForJSONResponse(restAPI + "&$skip=50", accessToken);
+                apiOutput = Office365API.getRequestForJSONResponse(restAPI + "&$skip=50&$top=50", accessToken);
                 obj = new JSONObject(apiOutput);
                 jsonArray = obj.getJSONArray("value");
                 for (int i = 0; i < jsonArray.length(); i++) {
@@ -764,7 +785,7 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
                 mEventsItems = items;
 
                 // write event items to cache
-                EventsCache.write(items, getApplicationContext());
+                EventsCache.write(items, MainActivity.this);
 
                 startAlarm();
 
@@ -821,7 +842,9 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
         Log.d(TAG, Helpers.LogEnterMethod("onResume"));
 
         doNullChecks();
-        getAllEvents(false);
+        if(mCurrentUser != null) {
+            getAllEvents(false);
+        }
 
         Log.d(TAG, Helpers.LogLeaveMethod("onResume"));
     }
@@ -853,3 +876,23 @@ public class MainActivity extends ActionBarActivity implements EventItemsFragmen
     }
 
 }
+// MIT License:
+
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the
+// ""Software""), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
+
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
